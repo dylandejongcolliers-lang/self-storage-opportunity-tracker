@@ -14,10 +14,24 @@ export default async function DashboardLayout({
     <div className="min-h-full">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-semibold tracking-tight">
               Self-Storage Opportunity Tracker
             </Link>
+            <nav className="flex items-center gap-4 text-sm">
+              <Link
+                href="/dashboard"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Listings
+              </Link>
+              <Link
+                href="/dashboard/clients"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Clients
+              </Link>
+            </nav>
           </div>
           <form action={logout}>
             <Button variant="ghost" size="sm" type="submit">

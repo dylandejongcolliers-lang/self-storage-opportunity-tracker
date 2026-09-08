@@ -32,6 +32,14 @@ enum AssignedTo {
   Tom
 }
 
+/// Status of a listing<->client match within the current publishing week.
+enum WeekStatus {
+  New
+  CarriedOver
+  Updated
+  Passed
+}
+
 /// A single self-storage sale opportunity.
 model Listing {
   id            String      @id @default(cuid())
@@ -56,6 +64,47 @@ model Listing {
   createdAt     DateTime    @default(now())
   lastUpdated   DateTime    @updatedAt
 
+  matches       ListingClientMatch[]
+
   @@index([market])
   @@index([stage])
+}
+
+/// A buyer we send matched opportunities to.
+model Client {
+  id                String   @id @default(cuid())
+  name              String
+  /// Unguessable token in the client-facing URL: /share/<shareToken>
+  shareToken        String   @unique
+
+  buyBoxMarkets     Market[]
+  buyBoxPriceMin    Int?
+  buyBoxPriceMax    Int?
+  buyBoxCapRateMin  Float?
+  buyBoxUnitMin     Int?
+  buyBoxUnitMax     Int?
+  buyBoxNotes       String   @default("")
+
+  createdAt         DateTime @default(now())
+  lastUpdated       DateTime @updatedAt
+
+  matches           ListingClientMatch[]
+}
+
+/// A confirmed pairing of one listing with one client.
+model ListingClientMatch {
+  id                String     @id @default(cuid())
+  listingId         String
+  clientId          String
+  listing           Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  client            Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  clientFacingNotes String     @default("")
+  weekStatus        WeekStatus @default(New)
+
+  matchedAt         DateTime   @default(now())
+  lastUpdated       DateTime   @updatedAt
+
+  @@unique([listingId, clientId])
+  @@index([clientId])
 }
