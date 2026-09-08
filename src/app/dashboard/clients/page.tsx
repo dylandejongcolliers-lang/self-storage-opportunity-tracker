@@ -4,9 +4,7 @@ import { listingMatchesBuyBox } from "@/lib/clients";
 import { AddClientDialog } from "./add-client-dialog";
 import { ClientCard } from "./client-card";
 
-export const metadata = {
-  title: "Clients · Self-Storage Opportunity Tracker",
-};
+export const metadata = { title: "Clients" };
 
 export default async function ClientsPage() {
   await requireAuth();
@@ -26,7 +24,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Clients</h1>
           <p className="text-muted-foreground text-sm">

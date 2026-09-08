@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import type { Client } from "@prisma/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,21 +13,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { updateClient, type ClientFormState } from "./actions";
+import { updateClient } from "./actions";
 import { ClientFormFields } from "./client-form-fields";
-
-const initial: ClientFormState = { ok: false };
 
 export function EditClientDialog({ client }: { client: Client }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(updateClient, initial);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state.ok) {
-      toast.success("Buy box saved.");
-      setOpen(false);
-    }
-  }, [state]);
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await updateClient(formData);
+      if (res.ok) {
+        toast.success("Buy box saved.");
+        setError(undefined);
+        setOpen(false);
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -42,17 +47,11 @@ export function EditClientDialog({ client }: { client: Client }) {
           <DialogDescription>{client.name}</DialogDescription>
         </DialogHeader>
 
-        <form
-          key={open ? "open" : "closed"}
-          action={formAction}
-          className="space-y-4"
-        >
+        <form key={open ? "open" : "closed"} action={onSubmit} className="space-y-4">
           <input type="hidden" name="id" value={client.id} />
           <ClientFormFields client={client} />
 
-          {state.error ? (
-            <p className="text-destructive text-sm">{state.error}</p>
-          ) : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

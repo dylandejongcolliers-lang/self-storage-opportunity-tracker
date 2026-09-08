@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 import type { Listing } from "@prisma/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,21 +13,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { updateListing, type ListingFormState } from "./actions";
+import { updateListing } from "./actions";
 import { ListingFormFields } from "./listing-form-fields";
-
-const initial: ListingFormState = { ok: false };
 
 export function EditListingDialog({ listing }: { listing: Listing }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(updateListing, initial);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state.ok) {
-      toast.success("Listing updated.");
-      setOpen(false);
-    }
-  }, [state]);
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await updateListing(formData);
+      if (res.ok) {
+        toast.success("Listing updated.");
+        setError(undefined);
+        setOpen(false);
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -43,26 +47,15 @@ export function EditListingDialog({ listing }: { listing: Listing }) {
           <DialogDescription>{listing.propertyName}</DialogDescription>
         </DialogHeader>
 
-        {/* `key` forces the uncontrolled fields to re-init each time the
-            dialog opens, so edits always start from the saved values. */}
-        <form
-          key={open ? "open" : "closed"}
-          action={formAction}
-          className="space-y-4"
-        >
+        {/* `key` re-inits the uncontrolled fields each time the dialog opens. */}
+        <form key={open ? "open" : "closed"} action={onSubmit} className="space-y-4">
           <input type="hidden" name="id" value={listing.id} />
           <ListingFormFields listing={listing} />
 
-          {state.error ? (
-            <p className="text-destructive text-sm">{state.error}</p>
-          ) : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>

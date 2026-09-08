@@ -11,7 +11,7 @@ import { Filters } from "./filters";
 import { AddListingDialog } from "./add-listing-dialog";
 import { ListingsTable } from "./listings-table";
 
-export const metadata = { title: "Listings · Self-Storage Opportunity Tracker" };
+export const metadata = { title: "Listings" };
 
 function orderByFor(sort: SortKey): Prisma.ListingOrderByWithRelationInput[] {
   switch (sort) {
@@ -55,7 +55,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Listings</h1>
           <p className="text-muted-foreground text-sm">

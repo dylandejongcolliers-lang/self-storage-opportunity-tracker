@@ -32,7 +32,6 @@ function parseBuyBox(formData: FormData) {
 }
 
 export async function createClient(
-  _prev: ClientFormState,
   formData: FormData,
 ): Promise<ClientFormState> {
   await requireAuth();
@@ -53,7 +52,6 @@ export async function createClient(
 }
 
 export async function updateClient(
-  _prev: ClientFormState,
   formData: FormData,
 ): Promise<ClientFormState> {
   await requireAuth();

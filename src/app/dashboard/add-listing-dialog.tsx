@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,21 +12,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { createListing, type ListingFormState } from "./actions";
+import { createListing } from "./actions";
 import { ListingFormFields } from "./listing-form-fields";
-
-const initial: ListingFormState = { ok: false };
 
 export function AddListingDialog() {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(createListing, initial);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state.ok) {
-      toast.success("Listing added.");
-      setOpen(false);
-    }
-  }, [state]);
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await createListing(formData);
+      if (res.ok) {
+        toast.success("Listing added.");
+        setError(undefined);
+        setOpen(false);
+      } else {
+        setError(res.error);
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -42,19 +46,13 @@ export function AddListingDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form action={formAction} className="space-y-4">
+        <form action={onSubmit} className="space-y-4">
           <ListingFormFields />
 
-          {state.error ? (
-            <p className="text-destructive text-sm">{state.error}</p>
-          ) : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>

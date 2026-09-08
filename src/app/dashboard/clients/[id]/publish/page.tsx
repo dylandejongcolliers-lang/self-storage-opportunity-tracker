@@ -7,9 +7,7 @@ import { formatDate } from "@/lib/listings";
 import { WEEK_STATUS_LABELS } from "@/lib/clients";
 import { PublishButton } from "./publish-button";
 
-export const metadata = {
-  title: "Publish snapshot · Self-Storage Opportunity Tracker",
-};
+export const metadata = { title: "Publish snapshot" };
 
 export default async function PublishPage({
   params,
@@ -46,7 +44,7 @@ export default async function PublishPage({
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">
             Publish snapshot — {client.name}

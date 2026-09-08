@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
 import { logout } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { Wordmark } from "@/components/wordmark";
 
 export default async function DashboardLayout({
   children,
@@ -12,29 +13,19 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-full">
-      <header className="border-b bg-white">
+      <header className="bg-brand-dark text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="font-semibold tracking-tight">
-              Self-Storage Opportunity Tracker
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link
-                href="/dashboard"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Listings
-              </Link>
-              <Link
-                href="/dashboard/clients"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Clients
-              </Link>
-            </nav>
+            <Wordmark href="/dashboard" tone="light" />
+            <DashboardNav />
           </div>
           <form action={logout}>
-            <Button variant="ghost" size="sm" type="submit">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="submit"
+              className="text-white/80 hover:bg-white/10 hover:text-white"
+            >
               Sign out
             </Button>
           </form>

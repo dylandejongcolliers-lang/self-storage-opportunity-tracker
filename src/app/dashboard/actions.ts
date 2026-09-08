@@ -53,7 +53,6 @@ function parseListing(formData: FormData) {
 }
 
 export async function createListing(
-  _prev: ListingFormState,
   formData: FormData,
 ): Promise<ListingFormState> {
   await requireAuth();
@@ -72,7 +71,6 @@ export async function createListing(
 }
 
 export async function updateListing(
-  _prev: ListingFormState,
   formData: FormData,
 ): Promise<ListingFormState> {
   await requireAuth();

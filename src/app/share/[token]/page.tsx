@@ -27,9 +27,11 @@ export async function generateMetadata({
   const { token } = await params;
   const client = await getClient(token);
   return {
-    title: client
-      ? `Opportunities for ${client.name}`
-      : "Self-Storage Opportunity Tracker",
+    title: {
+      absolute: client
+        ? `Opportunities for ${client.name}`
+        : "Self-Storage Opportunity Tracker",
+    },
     robots: { index: false, follow: false },
   };
 }

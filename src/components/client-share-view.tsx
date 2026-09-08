@@ -1,4 +1,5 @@
 import type { Listing, ListingClientMatch } from "@prisma/client";
+import { Wordmark } from "@/components/wordmark";
 import {
   MARKET_LABELS,
   STAGE_LABELS,
@@ -37,10 +38,15 @@ export function ClientShareView({
 }) {
   return (
     <div className="min-h-full bg-slate-50">
+      <div className="bg-brand-dark">
+        <div className="mx-auto flex max-w-3xl items-center px-5 py-3">
+          <Wordmark tone="light" />
+        </div>
+      </div>
       <header className="border-b bg-white">
         <div className="mx-auto max-w-3xl px-5 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Self-Storage Opportunity Tracker
+          <p className="text-brand-dark text-xs font-semibold uppercase tracking-[0.2em]">
+            Investment opportunities
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
             Prepared for {clientName}
@@ -121,7 +127,7 @@ export function ClientShareView({
                         href={l.dealRoomLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                        className="bg-brand hover:bg-brand-dark inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-white"
                       >
                         Open deal room →
                       </a>

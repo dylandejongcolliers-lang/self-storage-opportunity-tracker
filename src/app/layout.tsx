@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Self-Storage Opportunity Tracker",
+  title: {
+    default: "Self-Storage Opportunity Tracker",
+    template: "%s · Self-Storage Opportunity Tracker",
+  },
   description:
     "Track self-storage investment sale opportunities from first sighting through client offer.",
 };
