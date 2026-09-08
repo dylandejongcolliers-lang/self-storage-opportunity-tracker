@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Client, Listing, ListingClientMatch } from "@prisma/client";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
   MARKET_LABELS,
+  formatDate,
   formatMoney,
   formatPercent,
   formatNumber,
@@ -88,9 +90,19 @@ export function ClientCard({
               {client.buyBoxNotes}
             </p>
           ) : null}
+          <p className="text-muted-foreground mt-1 text-xs">
+            {client.lastPublishedAt
+              ? `Last published ${formatDate(client.lastPublishedAt)}`
+              : "Never published"}
+          </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <Button size="sm" asChild>
+            <Link href={`/dashboard/clients/${client.id}/publish`}>
+              Publish…
+            </Link>
+          </Button>
           <Button variant="ghost" size="sm" asChild>
             <a
               href={sharePath(client.shareToken)}

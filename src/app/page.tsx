@@ -29,9 +29,7 @@ export default function Home() {
             <li>✓ Phase 2 — listing tracker (/dashboard)</li>
             <li>✓ Phase 3 — clients &amp; buy-box matching</li>
             <li>✓ Phase 4 — client share pages</li>
-            <li className="opacity-60">
-              • Phase 5 — weekly snapshot publishing
-            </li>
+            <li>✓ Phase 5 — weekly snapshot publishing</li>
             <li className="opacity-60">
               • Phase 6 — styling, mobile &amp; branding
             </li>

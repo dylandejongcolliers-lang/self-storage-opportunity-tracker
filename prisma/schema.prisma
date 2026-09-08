@@ -85,6 +85,9 @@ model Client {
   buyBoxUnitMax     Int?
   buyBoxNotes       String   @default("")
 
+  /// When the weekly snapshot was last published for this client.
+  lastPublishedAt   DateTime?
+
   createdAt         DateTime @default(now())
   lastUpdated       DateTime @updatedAt
 
