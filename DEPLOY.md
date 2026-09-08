@@ -1,36 +1,48 @@
 # Deploy
 
-## Phase 1 — prove hosting (do this now)
+The app auto-deploys to Vercel on every push to `main`.
+Live: https://self-storage-opportunity-tracker.vercel.app/
 
-### 1. Create the GitHub repo and push
+## Phase 2 — connect the database and password
 
-```bash
-# from the project root
-git remote add origin https://github.com/<your-username>/self-storage-opportunity-tracker.git
-git push -u origin main
+The `/dashboard` pages need four environment variables. Add them in
+**Vercel → Project → Settings → Environment Variables** (set each for
+Production, Preview, and Development), then redeploy.
+
+| Variable       | Value                                                                 |
+| -------------- | ------------------------------------------------------------------- |
+| `DATABASE_URL` | Neon **pooled** connection string (host has `-pooler`), with `?sslmode=require&pgbouncer=true` |
+| `DIRECT_URL`   | Neon **direct** connection string (same, without `-pooler`), with `?sslmode=require` |
+| `APP_PASSWORD` | The shared team password for signing in                            |
+| `AUTH_SECRET`  | A random 40+ character string (cookie signing)                     |
+
+Use the same values that are in your local `.env` (the `AUTH_SECRET` there was
+generated for you; pick a real `APP_PASSWORD` before going live).
+
+### How migrations reach production
+
+`package.json` build script is:
+
+```
+prisma generate && prisma migrate deploy && next build
 ```
 
-(Create the empty repo first at https://github.com/new — name it
-`self-storage-opportunity-tracker`, keep it **Private**, don't add a README/.gitignore.)
+So every deploy applies any new database migrations automatically. If the
+database can't be reached during a build, the build fails on purpose rather
+than shipping a broken app.
 
-### 2. Import into Vercel
+### Local development
 
-1. Go to https://vercel.com/new and pick the repo.
-2. Framework preset: **Next.js** (auto-detected). Leave build/output settings default.
-3. No environment variables are needed for Phase 1.
-4. Click **Deploy**. You should get a live URL showing the branded landing page.
+```bash
+npm install          # also runs `prisma generate`
+npm run db:migrate    # create/apply migrations against your Neon dev branch
+npm run dev           # http://localhost:3000
+```
 
-Once that URL loads, Phase 1 is done and hosting is proven.
+`npm run db:studio` opens Prisma Studio to browse/edit rows directly.
 
-## Later phases — environment variables
+## Later phases — no new setup expected
 
-These get added in Vercel (Project → Settings → Environment Variables) as we build:
-
-| Variable          | Added in | Purpose                                                        |
-| ----------------- | -------- | ------------------------------------------------------------- |
-| `DATABASE_URL`    | Phase 2  | Neon pooled connection string (for the app at runtime)       |
-| `DIRECT_URL`      | Phase 2  | Neon direct connection string (for Prisma migrations)        |
-| `APP_PASSWORD`    | Phase 2  | Shared password for the internal `/dashboard` pages          |
-| `AUTH_SECRET`     | Phase 2  | Random string used to sign the session cookie                |
-
-A local `.env` (git-ignored) will hold the same values for development.
+Phases 3–5 add more tables; each will ship as a new Prisma migration that the
+build applies on deploy. No new environment variables are anticipated until we
+add automated ingestion.

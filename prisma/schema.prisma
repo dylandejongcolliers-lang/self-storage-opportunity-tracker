@@ -1,0 +1,61 @@
+// Prisma schema — the single source of truth for the database shape.
+// After editing this file, run:  npx prisma migrate dev --name <change>
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")   // pooled connection, used by the app
+  directUrl = env("DIRECT_URL")     // direct connection, used for migrations
+}
+
+/// The three markets we actively track, plus a catch-all.
+enum Market {
+  BayArea
+  SanDiego
+  RenoNorthernNV
+  Other
+}
+
+/// Where a listing sits in our pipeline.
+enum Stage {
+  New
+  TeamReviewed
+  UnderwritingOffer
+}
+
+/// Who on our side owns the listing.
+enum AssignedTo {
+  Dylan
+  Tom
+}
+
+/// A single self-storage sale opportunity.
+model Listing {
+  id            String      @id @default(cuid())
+  propertyName  String
+  address       String      @default("")
+  market        Market      @default(Other)
+  source        String      @default("")
+  dateFirstSeen DateTime    @default(now())
+  stage         Stage       @default(New)
+
+  askingPrice   Int?        // whole US dollars
+  unitCount     Int?
+  nrsf          Int?        // net rentable square feet
+  capRate       Float?      // percent, e.g. 6.25
+
+  listingLink   String?
+  dealRoomLink  String?
+  brokerContact String?
+  assignedTo    AssignedTo?
+  internalNotes String      @default("")
+
+  createdAt     DateTime    @default(now())
+  lastUpdated   DateTime    @updatedAt
+
+  @@index([market])
+  @@index([stage])
+}
