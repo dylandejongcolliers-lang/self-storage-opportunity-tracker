@@ -91,6 +91,15 @@ export function ClientCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <a
+              href={sharePath(client.shareToken)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Preview
+            </a>
+          </Button>
           <Button variant="ghost" size="sm" onClick={copyShareLink}>
             {copied ? "Copied!" : "Copy share link"}
           </Button>
