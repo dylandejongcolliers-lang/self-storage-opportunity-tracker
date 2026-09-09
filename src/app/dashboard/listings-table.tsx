@@ -46,6 +46,7 @@ type PatchFn = (
     stage?: Stage;
     assignedTo?: Assignee | null;
     marketId?: string | null;
+    flaggedForReview?: boolean;
   },
 ) => void;
 
@@ -72,6 +73,14 @@ function StageBadge({ stage }: { stage: Stage }) {
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE_CLASS[stage]}`}
     >
       {STAGE_LABELS[stage]}
+    </span>
+  );
+}
+
+function FlaggedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/25">
+      Flagged
     </span>
   );
 }
@@ -256,6 +265,24 @@ function ListingDetail({
         </dd>
       </div>
 
+      {l.flaggedForReview ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-inset ring-amber-600/20">
+          <div className="min-w-0 text-sm text-amber-800">
+            <span className="font-medium">Flagged for review</span>
+            {l.flagReason ? ` — ${l.flagReason}` : ""}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-amber-800 hover:text-amber-900"
+            disabled={pending}
+            onClick={() => patch(l.id, { flaggedForReview: false })}
+          >
+            Clear flag
+          </Button>
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-2 pt-1">
         <EditListingDialog listing={l} markets={markets} />
         <Button
@@ -275,9 +302,11 @@ function ListingDetail({
 export function ListingsTable({
   listings,
   markets,
+  emptyReview = false,
 }: {
   listings: ListingRow[];
   markets: MarketLite[];
+  emptyReview?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -318,9 +347,13 @@ export function ListingsTable({
   if (listings.length === 0) {
     return (
       <div className="px-6 py-16 text-center">
-        <p className="text-sm font-medium text-slate-900">No listings yet</p>
+        <p className="text-sm font-medium text-slate-900">
+          {emptyReview ? "Review queue is clear" : "No listings yet"}
+        </p>
         <p className="mt-1 text-sm text-slate-500">
-          Use “Add listing” or “Bulk add” to enter your first opportunities.
+          {emptyReview
+            ? "Nothing needs a market assignment or is flagged for review."
+            : "Use “Add listing” or “Bulk add” to enter your first opportunities."}
         </p>
       </div>
     );
@@ -356,6 +389,7 @@ export function ListingsTable({
                   <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <MarketBadge market={l.market} />
                     <StageBadge stage={l.stage as Stage} />
+                    {l.flaggedForReview ? <FlaggedBadge /> : null}
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
@@ -424,7 +458,10 @@ export function ListingsTable({
                       ) : null}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <MarketBadge market={l.market} />
+                      <span className="inline-flex items-center gap-1.5">
+                        <MarketBadge market={l.market} />
+                        {l.flaggedForReview ? <FlaggedBadge /> : null}
+                      </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <StageBadge stage={l.stage as Stage} />

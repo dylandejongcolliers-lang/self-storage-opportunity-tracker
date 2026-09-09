@@ -132,6 +132,7 @@ export async function updateListingFields(
     stage?: Stage;
     assignedTo?: Assignee | null;
     marketId?: string | null;
+    flaggedForReview?: boolean;
   },
 ): Promise<{ ok: boolean }> {
   await requireAuth();
@@ -140,10 +141,16 @@ export async function updateListingFields(
     stage?: Stage;
     assignedTo?: Assignee | null;
     marketId?: string | null;
+    flaggedForReview?: boolean;
+    flagReason?: string;
   } = {};
 
   if (fields.stage !== undefined && isStage(fields.stage)) {
     data.stage = fields.stage;
+  }
+  if (fields.flaggedForReview !== undefined) {
+    data.flaggedForReview = fields.flaggedForReview;
+    if (!fields.flaggedForReview) data.flagReason = "";
   }
   if (fields.assignedTo !== undefined) {
     data.assignedTo =

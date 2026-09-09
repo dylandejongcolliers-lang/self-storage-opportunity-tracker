@@ -128,6 +128,28 @@ function normalizeHeader(h: string): string {
   return h.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+/** Loose normalization for dedupe: lowercase, drop punctuation, collapse spaces. */
+export function normalizeForKey(s: string | null | undefined): string {
+  return (s ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** A listing is a duplicate when normalized name + city + state all match. */
+export function dedupeKey(
+  propertyName: string | null | undefined,
+  city: string | null | undefined,
+  state: string | null | undefined,
+): string {
+  return [
+    normalizeForKey(propertyName),
+    normalizeForKey(city),
+    normalizeForKey(state),
+  ].join("|");
+}
+
 /** Split one delimited line, honoring double-quoted fields. */
 function splitLine(line: string, delim: string): string[] {
   const out: string[] = [];

@@ -78,6 +78,11 @@ model Listing {
   assignedTo    AssignedTo?
   internalNotes String      @default("")
 
+  /// Set by the ingestion API for lower-confidence intake so it can be triaged
+  /// in the Review queue instead of blending into the main list.
+  flaggedForReview Boolean  @default(false)
+  flagReason       String   @default("")
+
   createdAt     DateTime    @default(now())
   lastUpdated   DateTime    @updatedAt
 
@@ -85,6 +90,7 @@ model Listing {
 
   @@index([marketId])
   @@index([stage])
+  @@index([flaggedForReview])
 }
 
 /// A buyer we send matched opportunities to.

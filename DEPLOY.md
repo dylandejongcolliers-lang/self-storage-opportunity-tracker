@@ -15,9 +15,35 @@ Production, Preview, and Development), then redeploy.
 | `DIRECT_URL`   | Neon **direct** connection string (same, without `-pooler`), with `?sslmode=require` |
 | `APP_PASSWORD` | The shared team password for signing in                            |
 | `AUTH_SECRET`  | A random 40+ character string (cookie signing)                     |
+| `INGEST_API_TOKEN` | Bearer token for `POST /api/ingest/listings` (see below). Until this is set, the endpoint returns 503. |
 
-Use the same values that are in your local `.env` (the `AUTH_SECRET` there was
-generated for you; pick a real `APP_PASSWORD` before going live).
+Use the same values that are in your local `.env` (the `AUTH_SECRET` and
+`INGEST_API_TOKEN` there were generated for you; pick a real `APP_PASSWORD`
+before going live).
+
+## Ingestion API
+
+`POST /api/ingest/listings` adds listings programmatically (same fields as the
+Bulk Add CSV). Auth is a single bearer token:
+
+```bash
+curl -X POST https://self-storage-opportunity-tracker.vercel.app/api/ingest/listings \
+  -H "Authorization: Bearer $INGEST_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[{"propertyName":"Example Storage","city":"San Jose","state":"CA","market":"Bay Area","askingPrice":4200000}]'
+```
+
+- Body is a JSON **array** of listing objects (max 500 per request).
+- `stage` is always forced to `New` server-side — a stage in the payload is ignored.
+- `market` matches a market name or slug; omit it and pass `state` to auto-assign.
+  If nothing matches, the listing is still created with no market and lands in
+  the **Review queue**.
+- Set `"flaggedForReview": true` (with optional `"flagReason"`) to route a row
+  into the Review queue regardless of market.
+- Duplicate rows (same normalized property name + city + state as an existing
+  listing) are returned as `skipped_duplicate`, not created.
+- The response has a `summary` and a per-row `results` array with one of:
+  `created`, `skipped_duplicate`, `needs_market_assignment`, `rejected` (+ reason).
 
 ### How migrations reach production
 
@@ -41,8 +67,8 @@ npm run dev           # http://localhost:3000
 
 `npm run db:studio` opens Prisma Studio to browse/edit rows directly.
 
-## Later phases — no new setup expected
+## New migrations
 
-Phases 3–5 add more tables; each will ship as a new Prisma migration that the
-build applies on deploy. No new environment variables are anticipated until we
-add automated ingestion.
+Each schema change ships as a Prisma migration that `prisma migrate deploy`
+applies during the build. New env vars (when added) are listed in the table
+above; keep local `.env` and Vercel in sync.
