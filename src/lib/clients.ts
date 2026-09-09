@@ -22,10 +22,10 @@ export const WEEK_STATUS_LABELS: Record<WeekStatus, string> = {
 };
 
 export const WEEK_STATUS_BADGE: Record<WeekStatus, string> = {
-  New: "bg-blue-100 text-blue-800",
-  CarriedOver: "bg-slate-100 text-slate-700",
-  Updated: "bg-amber-100 text-amber-800",
-  Passed: "bg-rose-100 text-rose-800",
+  New: "bg-[#edf1f7] text-[#264a72] ring-1 ring-inset ring-[#264a72]/20",
+  CarriedOver: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/15",
+  Updated: "bg-[#f4eede] text-[#7a5a2c] ring-1 ring-inset ring-[#7a5a2c]/20",
+  Passed: "bg-[#f3e7e3] text-[#834a39] ring-1 ring-inset ring-[#834a39]/20",
 };
 
 export function isWeekStatus(v: unknown): v is WeekStatus {

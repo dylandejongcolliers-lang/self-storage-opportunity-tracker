@@ -25,6 +25,18 @@ export const STAGE_LABELS: Record<Stage, string> = {
   UnderwritingOffer: "Underwriting / Offer",
 };
 
+/**
+ * One shared badge style per stage, drawn from the brand palette:
+ * harbor navy for New, brass/sand for Team Reviewed, evergreen for
+ * Underwriting / Offer. Used in the table, the client view, and matches.
+ */
+export const STAGE_BADGE_CLASS: Record<Stage, string> = {
+  New: "bg-[#edf1f7] text-[#264a72] ring-1 ring-inset ring-[#264a72]/20",
+  TeamReviewed: "bg-[#f4eede] text-[#7a5a2c] ring-1 ring-inset ring-[#7a5a2c]/20",
+  UnderwritingOffer:
+    "bg-[#e7efe8] text-[#3a6043] ring-1 ring-inset ring-[#3a6043]/20",
+};
+
 export const ASSIGNEES = ["Dylan", "Tom"] as const;
 export type Assignee = (typeof ASSIGNEES)[number];
 

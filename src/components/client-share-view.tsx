@@ -2,6 +2,7 @@ import type { Listing, ListingClientMatch } from "@prisma/client";
 import { Logo } from "@/components/logo";
 import {
   MARKET_LABELS,
+  STAGE_BADGE_CLASS,
   STAGE_LABELS,
   formatDate,
   formatMoney,
@@ -16,12 +17,6 @@ import {
 } from "@/lib/clients";
 
 type MatchWithListing = ListingClientMatch & { listing: Listing };
-
-const STAGE_BADGE: Record<Stage, string> = {
-  New: "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20",
-  TeamReviewed: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
-  UnderwritingOffer: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
-};
 
 /**
  * The exact content a client sees at /share/[token]. Rendered both there and in
@@ -95,7 +90,7 @@ export function ClientShareView({
                           {MARKET_LABELS[l.market]}
                         </span>
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE[l.stage as Stage]}`}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE_CLASS[l.stage as Stage]}`}
                         >
                           {STAGE_LABELS[l.stage as Stage]}
                         </span>
@@ -155,7 +150,7 @@ export function ClientShareView({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </dt>
       <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-900">

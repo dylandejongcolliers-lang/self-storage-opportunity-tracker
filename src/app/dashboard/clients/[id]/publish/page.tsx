@@ -46,7 +46,7 @@ export default async function PublishPage({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Publish snapshot — {client.name}
           </h1>
           <p className="text-muted-foreground text-sm">

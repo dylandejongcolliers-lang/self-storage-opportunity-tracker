@@ -26,7 +26,9 @@ export default async function ClientsPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Clients</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Clients
+          </h1>
           <p className="text-muted-foreground text-sm">
             {clients.length} {clients.length === 1 ? "client" : "clients"}
           </p>

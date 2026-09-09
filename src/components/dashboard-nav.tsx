@@ -20,7 +20,7 @@ export function DashboardNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1 text-sm">
+    <nav className="flex h-16 items-stretch gap-6 text-sm">
       {LINKS.map((l) => {
         const active = l.match(pathname);
         return (
@@ -29,16 +29,13 @@ export function DashboardNav() {
             href={l.href}
             aria-current={active ? "page" : undefined}
             className={
-              "relative rounded-md px-3 py-1.5 font-medium transition-colors " +
+              "-mb-px flex items-center border-b-2 font-medium transition-colors " +
               (active
-                ? "text-brand"
-                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900")
+                ? "border-brand text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-900")
             }
           >
             {l.label}
-            {active ? (
-              <span className="bg-brand absolute inset-x-3 -bottom-[11px] h-0.5 rounded-full" />
-            ) : null}
           </Link>
         );
       })}
