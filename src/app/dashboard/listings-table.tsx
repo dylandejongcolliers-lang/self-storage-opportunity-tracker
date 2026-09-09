@@ -164,10 +164,10 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
 
   if (listings.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-10 text-center">
-        <p className="text-sm font-medium">No listings yet</p>
+      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
+        <p className="text-sm font-medium text-slate-900">No listings yet</p>
         <p className="text-muted-foreground mt-1 text-sm">
-          Use “Add listing” to enter your first opportunity.
+          Use “Add listing” or “Bulk add” to enter your first opportunities.
         </p>
       </div>
     );
@@ -180,7 +180,10 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
         className={`space-y-3 md:hidden ${pending ? "opacity-60 transition-opacity" : ""}`}
       >
         {listings.map((l) => (
-          <div key={l.id} className="rounded-lg border bg-white p-4">
+          <div
+            key={l.id}
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-medium">
@@ -257,10 +260,10 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
       </div>
 
       {/* Desktop: table */}
-      <div className="hidden overflow-x-auto rounded-lg border md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
         <Table className={pending ? "opacity-60 transition-opacity" : undefined}>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-slate-50 hover:bg-slate-50 [&>th]:text-xs [&>th]:font-medium [&>th]:uppercase [&>th]:tracking-wide [&>th]:text-slate-500">
               <TableHead className="min-w-[200px]">Property</TableHead>
               <TableHead>Market</TableHead>
               <TableHead className="min-w-[190px]">Stage</TableHead>
@@ -277,7 +280,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
           </TableHeader>
           <TableBody>
             {listings.map((l) => (
-              <TableRow key={l.id}>
+              <TableRow key={l.id} className="hover:bg-slate-50/60">
                 <TableCell>
                   <div className="font-medium">
                     {l.listingLink ? (

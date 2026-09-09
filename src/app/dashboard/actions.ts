@@ -17,6 +17,7 @@ import {
   parseDateOnly,
   str,
 } from "@/lib/form";
+import type { ListingImportData } from "@/lib/listings-import";
 
 export type ListingFormState = { ok: boolean; error?: string };
 
@@ -118,6 +119,26 @@ export async function updateListingFields(
 
   revalidatePath("/dashboard");
   return { ok: true };
+}
+
+export async function createListingsBulk(
+  rows: ListingImportData[],
+): Promise<{ ok: boolean; count: number; error?: string }> {
+  await requireAuth();
+
+  const clean = rows.filter((r) => r && r.propertyName?.trim());
+  if (clean.length === 0) return { ok: false, count: 0, error: "No rows to import." };
+  if (clean.length > 500) {
+    return { ok: false, count: 0, error: "Too many rows (max 500 at a time)." };
+  }
+
+  try {
+    const res = await prisma.listing.createMany({ data: clean });
+    revalidatePath("/dashboard");
+    return { ok: true, count: res.count };
+  } catch {
+    return { ok: false, count: 0, error: "Could not import the listings." };
+  }
 }
 
 export async function deleteListing(id: string): Promise<{ ok: boolean }> {

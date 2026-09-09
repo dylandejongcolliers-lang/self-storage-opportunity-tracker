@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/auth";
 import { logout } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { Wordmark } from "@/components/wordmark";
+import { Logo } from "@/components/logo";
 
 export default async function DashboardLayout({
   children,
@@ -12,11 +12,11 @@ export default async function DashboardLayout({
   await requireAuth();
 
   return (
-    <div className="min-h-full">
-      <header className="bg-brand-dark text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-6">
-            <Wordmark href="/dashboard" tone="light" />
+    <div className="min-h-full bg-slate-50">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+          <div className="flex items-center gap-7">
+            <Logo href="/dashboard" height={32} />
             <DashboardNav />
           </div>
           <form action={logout}>
@@ -24,7 +24,7 @@ export default async function DashboardLayout({
               variant="ghost"
               size="sm"
               type="submit"
-              className="text-white/80 hover:bg-white/10 hover:text-white"
+              className="text-slate-500 hover:text-slate-900"
             >
               Sign out
             </Button>
@@ -32,7 +32,7 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
     </div>
   );
 }

@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/dashboard", label: "Listings", match: (p: string) => p === "/dashboard" },
+  {
+    href: "/dashboard",
+    label: "Listings",
+    match: (p: string) => p === "/dashboard",
+  },
   {
     href: "/dashboard/clients",
     label: "Clients",
@@ -25,12 +29,16 @@ export function DashboardNav() {
             href={l.href}
             aria-current={active ? "page" : undefined}
             className={
-              active
-                ? "rounded-md bg-white/15 px-3 py-1.5 font-medium text-white"
-                : "rounded-md px-3 py-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+              "relative rounded-md px-3 py-1.5 font-medium transition-colors " +
+              (active
+                ? "text-brand"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900")
             }
           >
             {l.label}
+            {active ? (
+              <span className="bg-brand absolute inset-x-3 -bottom-[11px] h-0.5 rounded-full" />
+            ) : null}
           </Link>
         );
       })}

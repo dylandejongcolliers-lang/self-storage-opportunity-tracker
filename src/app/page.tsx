@@ -1,25 +1,25 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Wordmark } from "@/components/wordmark";
+import { Logo } from "@/components/logo";
 
 export default function Home() {
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <div className="bg-brand-dark">
-        <div className="mx-auto flex max-w-5xl items-center px-5 py-3">
-          <Wordmark tone="light" />
+    <div className="flex min-h-full flex-1 flex-col bg-slate-50">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-14 max-w-5xl items-center px-5">
+          <Logo height={32} />
         </div>
-      </div>
+      </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24">
         <div className="w-full max-w-xl text-center">
-          <p className="text-brand-dark text-xs font-semibold uppercase tracking-[0.2em]">
+          <p className="text-brand text-xs font-semibold uppercase tracking-[0.18em]">
             Internal tool
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             Self-Storage Opportunity Tracker
           </h1>
-          <p className="text-muted-foreground mt-4 text-base leading-7">
+          <p className="mt-4 text-base leading-7 text-slate-600">
             Track self-storage investment sale opportunities from first sighting
             through client offer.
           </p>
@@ -28,18 +28,6 @@ export default function Home() {
             <Button asChild size="lg">
               <Link href="/dashboard">Open the dashboard</Link>
             </Button>
-          </div>
-
-          <div className="mt-10 rounded-xl border bg-white p-6 text-left shadow-sm">
-            <h2 className="text-sm font-semibold">Status</h2>
-            <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
-              <li>✓ Phase 1 — project scaffolded &amp; hosting proven</li>
-              <li>✓ Phase 2 — listing tracker (/dashboard)</li>
-              <li>✓ Phase 3 — clients &amp; buy-box matching</li>
-              <li>✓ Phase 4 — client share pages</li>
-              <li>✓ Phase 5 — weekly snapshot publishing</li>
-              <li>✓ Phase 6 — styling, mobile &amp; branding</li>
-            </ul>
           </div>
         </div>
       </main>

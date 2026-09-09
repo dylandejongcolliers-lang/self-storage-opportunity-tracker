@@ -35,8 +35,8 @@ export default async function ClientsPage() {
       </div>
 
       {clients.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center">
-          <p className="text-sm font-medium">No clients yet</p>
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
+          <p className="text-sm font-medium text-slate-900">No clients yet</p>
           <p className="text-muted-foreground mt-1 text-sm">
             Add a client and set their buy box to start matching listings.
           </p>

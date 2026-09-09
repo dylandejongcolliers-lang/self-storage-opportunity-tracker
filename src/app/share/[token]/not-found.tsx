@@ -1,13 +1,13 @@
-import { Wordmark } from "@/components/wordmark";
+import { Logo } from "@/components/logo";
 
 export default function ShareNotFound() {
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="bg-brand-dark">
-        <div className="mx-auto flex max-w-3xl items-center px-5 py-3">
-          <Wordmark tone="light" />
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-14 max-w-3xl items-center px-5">
+          <Logo height={32} />
         </div>
-      </div>
+      </header>
       <div className="flex items-center justify-center px-6 py-24">
         <div className="max-w-sm text-center">
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">

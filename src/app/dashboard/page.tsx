@@ -9,6 +9,7 @@ import {
 } from "@/lib/listings";
 import { Filters } from "./filters";
 import { AddListingDialog } from "./add-listing-dialog";
+import { BulkAddDialog } from "./bulk-add-dialog";
 import { ListingsTable } from "./listings-table";
 
 export const metadata = { title: "Listings" };
@@ -57,12 +58,17 @@ export default async function DashboardPage({
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Listings</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            Listings
+          </h1>
+          <p className="text-muted-foreground mt-0.5 text-sm">
             {listings.length} shown · {total} total
           </p>
         </div>
-        <AddListingDialog />
+        <div className="flex gap-2">
+          <BulkAddDialog />
+          <AddListingDialog />
+        </div>
       </div>
 
       <Filters
