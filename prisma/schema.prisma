@@ -87,6 +87,7 @@ model Listing {
   lastUpdated   DateTime    @updatedAt
 
   matches       ListingClientMatch[]
+  boardLinks    ClientBoardListing[]
 
   @@index([marketId])
   @@index([stage])
@@ -116,6 +117,36 @@ model Client {
   lastUpdated       DateTime @updatedAt
 
   matches           ListingClientMatch[]
+  boards            ClientBoard[]
+}
+
+/// A client-labeled board for organizing listings. Deliberately separate from
+/// Client / buy-box data — `clientId` is an optional loose link, not a merge.
+model ClientBoard {
+  id        String   @id @default(cuid())
+  name      String
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings  ClientBoardListing[]
+
+  @@index([clientId])
+}
+
+/// Many-to-many join: a listing can sit on many boards without being copied.
+model ClientBoardListing {
+  id        String      @id @default(cuid())
+  boardId   String
+  listingId String
+  board     ClientBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  listing   Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  addedNote String      @default("")
+  addedAt   DateTime    @default(now())
+
+  @@unique([boardId, listingId])
+  @@index([listingId])
 }
 
 /// A confirmed pairing of one listing with one client.

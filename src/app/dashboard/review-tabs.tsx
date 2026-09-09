@@ -6,7 +6,7 @@ export function ReviewTabs({
   view,
   reviewCount,
 }: {
-  view: "all" | "review";
+  view: "all" | "review" | "board";
   reviewCount: number;
 }) {
   const router = useRouter();
@@ -14,6 +14,7 @@ export function ReviewTabs({
 
   function go(next: "all" | "review") {
     const p = new URLSearchParams(params.toString());
+    p.delete("board");
     if (next === "review") p.set("view", "review");
     else p.delete("view");
     const qs = p.toString();

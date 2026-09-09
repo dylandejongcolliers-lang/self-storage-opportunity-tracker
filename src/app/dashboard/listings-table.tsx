@@ -35,10 +35,16 @@ import {
   type Stage,
 } from "@/lib/listings";
 import { groupByRegion, type MarketLite } from "@/lib/markets";
+import type { BoardLite } from "@/lib/boards";
 import { deleteListing, updateListingFields } from "./actions";
+import { removeListingsFromBoard } from "./board-actions";
 import { EditListingDialog } from "./edit-listing-dialog";
+import { PushToBoardDialog } from "./push-to-board-dialog";
 
-export type ListingRow = Listing & { market: MarketLite | null };
+export type ListingRow = Listing & {
+  market: MarketLite | null;
+  boardLinks: { addedNote: string }[];
+};
 
 type PatchFn = (
   id: string,
@@ -145,16 +151,25 @@ function ListingDetail({
   markets,
   patch,
   onRemove,
+  onPush,
+  onRemoveFromBoard,
+  activeBoardId,
   pending,
 }: {
   listing: ListingRow;
   markets: MarketLite[];
   patch: PatchFn;
   onRemove: (l: ListingRow) => void;
+  onPush: (id: string) => void;
+  onRemoveFromBoard: (id: string) => void;
+  activeBoardId?: string;
   pending: boolean;
 }) {
   const l = listing;
-  const groups = groupByRegion(markets.filter((m) => m.active || m.id === l.marketId));
+  const groups = groupByRegion(
+    markets.filter((m) => m.active || m.id === l.marketId),
+  );
+  const boardNote = l.boardLinks[0]?.addedNote ?? "";
 
   return (
     <div className="space-y-4">
@@ -265,6 +280,12 @@ function ListingDetail({
         </dd>
       </div>
 
+      {activeBoardId && boardNote ? (
+        <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 ring-1 ring-inset ring-slate-200">
+          <span className="font-medium">Board note:</span> {boardNote}
+        </div>
+      ) : null}
+
       {l.flaggedForReview ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-inset ring-amber-600/20">
           <div className="min-w-0 text-sm text-amber-800">
@@ -283,8 +304,26 @@ function ListingDetail({
         </div>
       ) : null}
 
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex flex-wrap items-center gap-2 pt-1">
         <EditListingDialog listing={l} markets={markets} />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => onPush(l.id)}
+        >
+          Push to client
+        </Button>
+        {activeBoardId ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={() => onRemoveFromBoard(l.id)}
+          >
+            Remove from this board
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           size="sm"
@@ -302,15 +341,24 @@ function ListingDetail({
 export function ListingsTable({
   listings,
   markets,
+  boards,
+  activeBoardId,
   emptyReview = false,
+  emptyBoard = false,
 }: {
   listings: ListingRow[];
   markets: MarketLite[];
+  boards: BoardLite[];
+  activeBoardId?: string;
   emptyReview?: boolean;
+  emptyBoard?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [pushOpen, setPushOpen] = useState(false);
+  const [pushIds, setPushIds] = useState<string[]>([]);
 
   const patch: PatchFn = (id, fields) => {
     startTransition(async () => {
@@ -340,20 +388,63 @@ export function ListingsTable({
     });
   }
 
+  function removeFromBoard(ids: string[]) {
+    if (!activeBoardId || ids.length === 0) return;
+    startTransition(async () => {
+      const res = await removeListingsFromBoard(activeBoardId, ids);
+      if (!res.ok) {
+        toast.error("Could not remove from the board.");
+        return;
+      }
+      toast.success(
+        `Removed ${res.removed} from the board (listings kept).`,
+      );
+      setSelected(new Set());
+      router.refresh();
+    });
+  }
+
+  function openPush(ids: string[]) {
+    setPushIds(ids);
+    setPushOpen(true);
+  }
+
   function toggle(id: string) {
     setOpenId((cur) => (cur === id ? null : id));
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSelected =
+    listings.length > 0 && listings.every((l) => selected.has(l.id));
+
+  function toggleSelectAll() {
+    setSelected(allSelected ? new Set() : new Set(listings.map((l) => l.id)));
   }
 
   if (listings.length === 0) {
     return (
       <div className="px-6 py-16 text-center">
         <p className="text-sm font-medium text-slate-900">
-          {emptyReview ? "Review queue is clear" : "No listings yet"}
+          {emptyReview
+            ? "Review queue is clear"
+            : emptyBoard
+              ? "This board is empty"
+              : "No listings yet"}
         </p>
         <p className="mt-1 text-sm text-slate-500">
           {emptyReview
             ? "Nothing needs a market assignment or is flagged for review."
-            : "Use “Add listing” or “Bulk add” to enter your first opportunities."}
+            : emptyBoard
+              ? "Use “Push to client” on any listing to add it here."
+              : "Use “Add listing” or “Bulk add” to enter your first opportunities."}
         </p>
       </div>
     );
@@ -369,38 +460,47 @@ export function ListingsTable({
           const open = openId === l.id;
           return (
             <li key={l.id} className="px-4 py-3.5">
-              <button
-                type="button"
-                onClick={() => toggle(l.id)}
-                className="flex w-full items-start gap-2 text-left"
-              >
-                <span className="pt-1">
-                  <Chevron open={open} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-slate-900">
-                    {l.propertyName}
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 rounded border-slate-300"
+                  checked={selected.has(l.id)}
+                  onChange={() => toggleSelect(l.id)}
+                  aria-label={`Select ${l.propertyName}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => toggle(l.id)}
+                  className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                >
+                  <span className="pt-1">
+                    <Chevron open={open} />
                   </span>
-                  {l.address ? (
-                    <span className="block text-xs text-slate-500">
-                      {l.address}
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-slate-900">
+                      {l.propertyName}
                     </span>
-                  ) : null}
-                  <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <MarketBadge market={l.market} />
-                    <StageBadge stage={l.stage as Stage} />
-                    {l.flaggedForReview ? <FlaggedBadge /> : null}
+                    {l.address ? (
+                      <span className="block text-xs text-slate-500">
+                        {l.address}
+                      </span>
+                    ) : null}
+                    <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <MarketBadge market={l.market} />
+                      <StageBadge stage={l.stage as Stage} />
+                      {l.flaggedForReview ? <FlaggedBadge /> : null}
+                    </span>
                   </span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="block text-sm font-semibold tabular-nums text-slate-900">
-                    {formatMoney(l.askingPrice)}
+                  <span className="shrink-0 text-right">
+                    <span className="block text-sm font-semibold tabular-nums text-slate-900">
+                      {formatMoney(l.askingPrice)}
+                    </span>
+                    <span className="block text-xs tabular-nums text-slate-500">
+                      {formatPercent(l.capRate)} cap
+                    </span>
                   </span>
-                  <span className="block text-xs tabular-nums text-slate-500">
-                    {formatPercent(l.capRate)} cap
-                  </span>
-                </span>
-              </button>
+                </button>
+              </div>
 
               {open ? (
                 <div className="mt-4 border-t border-slate-100 pt-4">
@@ -409,6 +509,9 @@ export function ListingsTable({
                     markets={markets}
                     patch={patch}
                     onRemove={remove}
+                    onPush={(id) => openPush([id])}
+                    onRemoveFromBoard={(id) => removeFromBoard([id])}
+                    activeBoardId={activeBoardId}
                     pending={pending}
                   />
                 </div>
@@ -423,7 +526,16 @@ export function ListingsTable({
         <Table className={pending ? "opacity-60 transition-opacity" : undefined}>
           <TableHeader>
             <TableRow className="border-slate-200 hover:bg-transparent [&>th]:h-11 [&>th]:text-[13px] [&>th]:font-semibold [&>th]:text-slate-700">
-              <TableHead className="w-10" />
+              <TableHead className="w-10 pl-4">
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border-slate-300"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
+              <TableHead className="w-8" />
               <TableHead className="w-full">Property</TableHead>
               <TableHead className="whitespace-nowrap">Market</TableHead>
               <TableHead className="whitespace-nowrap">Stage</TableHead>
@@ -446,7 +558,19 @@ export function ListingsTable({
                       open ? "bg-slate-50" : "hover:bg-slate-50/70"
                     }`}
                   >
-                    <TableCell className="pl-4">
+                    <TableCell
+                      className="pl-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        className="size-4 rounded border-slate-300"
+                        checked={selected.has(l.id)}
+                        onChange={() => toggleSelect(l.id)}
+                        aria-label={`Select ${l.propertyName}`}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Chevron open={open} />
                     </TableCell>
                     <TableCell>
@@ -475,12 +599,15 @@ export function ListingsTable({
                   </TableRow>
                   {open ? (
                     <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
-                      <TableCell colSpan={6} className="px-6 py-5">
+                      <TableCell colSpan={7} className="px-6 py-5">
                         <ListingDetail
                           listing={l}
                           markets={markets}
                           patch={patch}
                           onRemove={remove}
+                          onPush={(id) => openPush([id])}
+                          onRemoveFromBoard={(id) => removeFromBoard([id])}
+                          activeBoardId={activeBoardId}
                           pending={pending}
                         />
                       </TableCell>
@@ -492,6 +619,48 @@ export function ListingsTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 ? (
+        <div className="sticky bottom-4 z-10 mx-4 mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-lg">
+          <span className="text-sm font-medium text-slate-900">
+            {selected.size} selected
+          </span>
+          <Button
+            size="sm"
+            disabled={pending}
+            onClick={() => openPush([...selected])}
+          >
+            Push to client
+          </Button>
+          {activeBoardId ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => removeFromBoard([...selected])}
+            >
+              Remove from board
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto"
+            onClick={() => setSelected(new Set())}
+          >
+            Clear
+          </Button>
+        </div>
+      ) : null}
+
+      <PushToBoardDialog
+        open={pushOpen}
+        onOpenChange={setPushOpen}
+        listingIds={pushIds}
+        boards={boards}
+        onDone={() => setSelected(new Set())}
+      />
     </>
   );
 }
