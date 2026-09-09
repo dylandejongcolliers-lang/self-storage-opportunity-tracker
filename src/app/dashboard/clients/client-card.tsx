@@ -15,12 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  MARKET_LABELS,
   formatDate,
   formatMoney,
   formatPercent,
   formatNumber,
 } from "@/lib/listings";
+import type { MarketLite } from "@/lib/markets";
 import {
   WEEK_STATUSES,
   WEEK_STATUS_BADGE,
@@ -38,20 +38,26 @@ import {
 } from "./actions";
 import { EditClientDialog } from "./edit-client-dialog";
 
-type MatchWithListing = ListingClientMatch & { listing: Listing };
+type ListingWithMarket = Listing & { market: MarketLite | null };
+type MatchWithListing = ListingClientMatch & { listing: ListingWithMarket };
 
 export function ClientCard({
   client,
   matches,
   suggestions,
+  markets,
 }: {
   client: Client;
   matches: MatchWithListing[];
-  suggestions: Listing[];
+  suggestions: ListingWithMarket[];
+  markets: MarketLite[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+
+  const marketName = (slug: string) =>
+    markets.find((m) => m.slug === slug)?.name ?? slug;
 
   function run(fn: () => Promise<{ ok: boolean }>, errorMsg: string) {
     startTransition(async () => {
@@ -83,7 +89,7 @@ export function ClientCard({
         <div className="min-w-0">
           <h2 className="text-lg font-semibold tracking-tight">{client.name}</h2>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            {buyBoxSummary(client)}
+            {buyBoxSummary(client, marketName)}
           </p>
           {client.buyBoxNotes ? (
             <p className="text-muted-foreground mt-1 text-xs italic">
@@ -115,7 +121,7 @@ export function ClientCard({
           <Button variant="ghost" size="sm" onClick={copyShareLink}>
             {copied ? "Copied!" : "Copy share link"}
           </Button>
-          <EditClientDialog client={client} />
+          <EditClientDialog client={client} markets={markets} />
           <Button
             variant="ghost"
             size="sm"
@@ -197,9 +203,9 @@ export function ClientCard({
                       {l.propertyName}
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      {MARKET_LABELS[l.market]} · {formatMoney(l.askingPrice)} ·{" "}
-                      {formatPercent(l.capRate)} · {formatNumber(l.unitCount)}{" "}
-                      units
+                      {l.market?.name ?? "Needs market"} ·{" "}
+                      {formatMoney(l.askingPrice)} · {formatPercent(l.capRate)} ·{" "}
+                      {formatNumber(l.unitCount)} units
                     </div>
                   </div>
                   <Button
@@ -260,7 +266,7 @@ function MatchRow({
         <div className="min-w-0">
           <div className="text-sm font-medium">{match.listing.propertyName}</div>
           <div className="text-muted-foreground text-xs">
-            {MARKET_LABELS[match.listing.market]} ·{" "}
+            {match.listing.market?.name ?? "Needs market"} ·{" "}
             {formatMoney(match.listing.askingPrice)}
           </div>
         </div>

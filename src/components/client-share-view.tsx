@@ -1,7 +1,6 @@
 import type { Listing, ListingClientMatch } from "@prisma/client";
 import { Logo } from "@/components/logo";
 import {
-  MARKET_LABELS,
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
   formatDate,
@@ -16,7 +15,9 @@ import {
   type WeekStatus,
 } from "@/lib/clients";
 
-type MatchWithListing = ListingClientMatch & { listing: Listing };
+type MatchWithListing = ListingClientMatch & {
+  listing: Listing & { market: { name: string } | null };
+};
 
 /**
  * The exact content a client sees at /share/[token]. Rendered both there and in
@@ -87,7 +88,7 @@ export function ClientShareView({
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                          {MARKET_LABELS[l.market]}
+                          {l.market?.name ?? "—"}
                         </span>
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE_CLASS[l.stage as Stage]}`}

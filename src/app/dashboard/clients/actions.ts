@@ -4,7 +4,6 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { isMarket, type Market } from "@/lib/listings";
 import { isWeekStatus, type WeekStatus } from "@/lib/clients";
 import { optionalFloat, optionalInt, str } from "@/lib/form";
 
@@ -15,10 +14,15 @@ function newShareToken(): string {
 }
 
 function parseBuyBox(formData: FormData) {
-  const markets = formData
-    .getAll("buyBoxMarkets")
-    .map((v) => String(v))
-    .filter((v): v is Market => isMarket(v));
+  // Values are market slugs from the buy-box checkboxes.
+  const markets = [
+    ...new Set(
+      formData
+        .getAll("buyBoxMarkets")
+        .map((v) => String(v).trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
 
   return {
     buyBoxMarkets: markets,

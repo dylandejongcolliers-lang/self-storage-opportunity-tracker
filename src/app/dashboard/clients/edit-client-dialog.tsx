@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { Client } from "@prisma/client";
 import { toast } from "sonner";
+import type { MarketLite } from "@/lib/markets";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,13 @@ import {
 import { updateClient } from "./actions";
 import { ClientFormFields } from "./client-form-fields";
 
-export function EditClientDialog({ client }: { client: Client }) {
+export function EditClientDialog({
+  client,
+  markets,
+}: {
+  client: Client;
+  markets: MarketLite[];
+}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -49,7 +56,7 @@ export function EditClientDialog({ client }: { client: Client }) {
 
         <form key={open ? "open" : "closed"} action={onSubmit} className="space-y-4">
           <input type="hidden" name="id" value={client.id} />
-          <ClientFormFields client={client} />
+          <ClientFormFields client={client} markets={markets} />
 
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
 

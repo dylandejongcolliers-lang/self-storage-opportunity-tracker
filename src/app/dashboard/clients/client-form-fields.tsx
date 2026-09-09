@@ -4,7 +4,7 @@ import type { Client } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MARKETS, MARKET_LABELS } from "@/lib/listings";
+import { groupByRegion, type MarketLite } from "@/lib/markets";
 
 function Field({
   label,
@@ -25,8 +25,15 @@ function Field({
   );
 }
 
-export function ClientFormFields({ client }: { client?: Client }) {
-  const selectedMarkets = new Set(client?.buyBoxMarkets ?? []);
+export function ClientFormFields({
+  client,
+  markets,
+}: {
+  client?: Client;
+  markets: MarketLite[];
+}) {
+  const selected = new Set(client?.buyBoxMarkets ?? []);
+  const groups = groupByRegion(markets.filter((m) => m.active));
 
   return (
     <div className="space-y-4">
@@ -39,21 +46,30 @@ export function ClientFormFields({ client }: { client?: Client }) {
         <p className="text-muted-foreground text-xs">
           Leave all unchecked to match any market.
         </p>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          {MARKETS.map((m) => (
-            <label
-              key={m}
-              className="flex items-center gap-2 text-sm font-normal"
-            >
-              <input
-                type="checkbox"
-                name="buyBoxMarkets"
-                value={m}
-                defaultChecked={selectedMarkets.has(m)}
-                className="border-input size-4 rounded"
-              />
-              {MARKET_LABELS[m]}
-            </label>
+        <div className="space-y-3 pt-1">
+          {groups.map(({ region, markets: list }) => (
+            <div key={region}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {region}
+              </p>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {list.map((m) => (
+                  <label
+                    key={m.id}
+                    className="flex items-center gap-2 text-sm font-normal"
+                  >
+                    <input
+                      type="checkbox"
+                      name="buyBoxMarkets"
+                      value={m.slug}
+                      defaultChecked={selected.has(m.slug)}
+                      className="border-input size-4 rounded"
+                    />
+                    {m.name}
+                  </label>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

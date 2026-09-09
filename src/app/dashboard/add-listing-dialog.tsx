@@ -12,10 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { MarketLite } from "@/lib/markets";
 import { createListing } from "./actions";
 import { ListingFormFields } from "./listing-form-fields";
 
-export function AddListingDialog() {
+export function AddListingDialog({ markets }: { markets: MarketLite[] }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -47,7 +48,7 @@ export function AddListingDialog() {
         </DialogHeader>
 
         <form action={onSubmit} className="space-y-4">
-          <ListingFormFields />
+          <ListingFormFields markets={markets} />
 
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
 

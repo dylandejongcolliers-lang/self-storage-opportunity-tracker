@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { Listing } from "@prisma/client";
 import { toast } from "sonner";
+import type { MarketLite } from "@/lib/markets";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,13 @@ import {
 import { updateListing } from "./actions";
 import { ListingFormFields } from "./listing-form-fields";
 
-export function EditListingDialog({ listing }: { listing: Listing }) {
+export function EditListingDialog({
+  listing,
+  markets,
+}: {
+  listing: Listing;
+  markets: MarketLite[];
+}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -50,7 +57,7 @@ export function EditListingDialog({ listing }: { listing: Listing }) {
         {/* `key` re-inits the uncontrolled fields each time the dialog opens. */}
         <form key={open ? "open" : "closed"} action={onSubmit} className="space-y-4">
           <input type="hidden" name="id" value={listing.id} />
-          <ListingFormFields listing={listing} />
+          <ListingFormFields listing={listing} markets={markets} />
 
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
 

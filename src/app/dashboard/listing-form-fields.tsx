@@ -7,18 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ASSIGNEES,
-  MARKETS,
-  MARKET_LABELS,
-  STAGES,
-  STAGE_LABELS,
-  toDateInputValue,
-} from "@/lib/listings";
+import { ASSIGNEES, STAGES, STAGE_LABELS, toDateInputValue } from "@/lib/listings";
+import { groupByRegion, type MarketLite } from "@/lib/markets";
 
 function Field({
   label,
@@ -39,7 +35,15 @@ function Field({
   );
 }
 
-export function ListingFormFields({ listing }: { listing?: Listing }) {
+export function ListingFormFields({
+  listing,
+  markets,
+}: {
+  listing?: Listing;
+  markets: MarketLite[];
+}) {
+  const groups = groupByRegion(markets.filter((m) => m.active));
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Field label="Property name" htmlFor="propertyName" className="sm:col-span-2">
@@ -52,23 +56,39 @@ export function ListingFormFields({ listing }: { listing?: Listing }) {
       </Field>
 
       <Field label="Address" htmlFor="address" className="sm:col-span-2">
+        <Input id="address" name="address" defaultValue={listing?.address ?? ""} />
+      </Field>
+
+      <Field label="City" htmlFor="city">
+        <Input id="city" name="city" defaultValue={listing?.city ?? ""} />
+      </Field>
+
+      <Field label="State" htmlFor="state">
         <Input
-          id="address"
-          name="address"
-          defaultValue={listing?.address ?? ""}
+          id="state"
+          name="state"
+          placeholder="CA"
+          maxLength={20}
+          defaultValue={listing?.state ?? ""}
         />
       </Field>
 
       <Field label="Market">
-        <Select name="market" defaultValue={listing?.market ?? "Other"}>
+        <Select name="marketId" defaultValue={listing?.marketId ?? "auto"}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Market" />
+            <SelectValue placeholder="Auto from state" />
           </SelectTrigger>
           <SelectContent>
-            {MARKETS.map((m) => (
-              <SelectItem key={m} value={m}>
-                {MARKET_LABELS[m]}
-              </SelectItem>
+            <SelectItem value="auto">Auto from state / unassigned</SelectItem>
+            {groups.map(({ region, markets: list }) => (
+              <SelectGroup key={region}>
+                <SelectLabel>{region}</SelectLabel>
+                {list.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
@@ -99,10 +119,7 @@ export function ListingFormFields({ listing }: { listing?: Listing }) {
       </Field>
 
       <Field label="Assigned to">
-        <Select
-          name="assignedTo"
-          defaultValue={listing?.assignedTo ?? "none"}
-        >
+        <Select name="assignedTo" defaultValue={listing?.assignedTo ?? "none"}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Unassigned" />
           </SelectTrigger>

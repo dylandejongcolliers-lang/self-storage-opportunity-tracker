@@ -13,7 +13,7 @@ async function getClient(token: string) {
       matches: {
         where: { weekStatus: { not: "Passed" } },
         orderBy: [{ weekStatus: "asc" }, { matchedAt: "desc" }],
-        include: { listing: true },
+        include: { listing: { include: { market: true } } },
       },
     },
   });

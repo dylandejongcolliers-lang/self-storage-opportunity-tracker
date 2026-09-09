@@ -1,10 +1,6 @@
 // Shared client / buy-box helpers. Safe to import from client components.
 
-import {
-  MARKET_LABELS,
-  formatMoney,
-  type Market,
-} from "@/lib/listings";
+import { formatMoney } from "@/lib/listings";
 
 export const WEEK_STATUSES = [
   "New",
@@ -34,9 +30,9 @@ export function isWeekStatus(v: unknown): v is WeekStatus {
   );
 }
 
-/** The buy-box fields we match on. */
+/** The buy-box fields we match on. `buyBoxMarkets` holds market slugs. */
 export type BuyBox = {
-  buyBoxMarkets: Market[];
+  buyBoxMarkets: string[];
   buyBoxPriceMin: number | null;
   buyBoxPriceMax: number | null;
   buyBoxCapRateMin: number | null;
@@ -46,7 +42,7 @@ export type BuyBox = {
 
 /** The listing fields we match against. */
 export type MatchableListing = {
-  market: Market;
+  marketSlug: string | null;
   askingPrice: number | null;
   capRate: number | null;
   unitCount: number | null;
@@ -63,11 +59,13 @@ export function listingMatchesBuyBox(
   listing: MatchableListing,
   box: BuyBox,
 ): boolean {
-  if (
-    box.buyBoxMarkets.length > 0 &&
-    !box.buyBoxMarkets.includes(listing.market)
-  ) {
-    return false;
+  if (box.buyBoxMarkets.length > 0) {
+    if (
+      !listing.marketSlug ||
+      !box.buyBoxMarkets.includes(listing.marketSlug)
+    ) {
+      return false;
+    }
   }
 
   if (box.buyBoxPriceMin != null) {
@@ -101,13 +99,19 @@ export function listingMatchesBuyBox(
   return true;
 }
 
-/** One-line human summary of a buy box for the client list. */
-export function buyBoxSummary(box: BuyBox): string {
+/**
+ * One-line human summary of a buy box. `marketName` maps a slug to a display
+ * name (falls back to the slug when a market was deleted).
+ */
+export function buyBoxSummary(
+  box: BuyBox,
+  marketName: (slug: string) => string = (s) => s,
+): string {
   const parts: string[] = [];
 
   parts.push(
     box.buyBoxMarkets.length
-      ? box.buyBoxMarkets.map((m) => MARKET_LABELS[m]).join(", ")
+      ? box.buyBoxMarkets.map((s) => marketName(s)).join(", ")
       : "Any market",
   );
 

@@ -14,12 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  MARKET_LABELS,
-  STAGE_LABELS,
-  formatMoney,
-  type Stage,
-} from "@/lib/listings";
+import { STAGE_LABELS, formatMoney, type Stage } from "@/lib/listings";
+import { matchMarket, type MarketLite } from "@/lib/markets";
 import {
   parseListingsInput,
   TEMPLATE_CSV,
@@ -30,7 +26,7 @@ import { createListingsBulk } from "./actions";
 
 type Step = "input" | "preview";
 
-export function BulkAddDialog() {
+export function BulkAddDialog({ markets }: { markets: MarketLite[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("input");
@@ -84,6 +80,16 @@ export function BulkAddDialog() {
     setStep("preview");
   }
 
+  function marketNameFor(r: ParsedRow): string {
+    if (!r.data) return "—";
+    const hit = matchMarket(markets, {
+      name: r.data.marketRaw,
+      slug: r.data.marketRaw,
+      state: r.data.state,
+    });
+    return hit ? hit.name : "Needs assignment";
+  }
+
   function doImport() {
     startTransition(async () => {
       const res = await createListingsBulk(ready.map((r) => r.data!));
@@ -92,7 +98,9 @@ export function BulkAddDialog() {
         return;
       }
       toast.success(
-        `Imported ${res.count} ${res.count === 1 ? "listing" : "listings"}.`,
+        res.needsMarket > 0
+          ? `Imported ${res.count} — ${res.needsMarket} need a market assigned.`
+          : `Imported ${res.count} ${res.count === 1 ? "listing" : "listings"}.`,
       );
       handleOpenChange(false);
       router.refresh();
@@ -156,7 +164,7 @@ export function BulkAddDialog() {
               rows={12}
               placeholder={
                 TEMPLATE_HEADERS.join(",") +
-                "\nSunrise Storage,123 Main St,Bay Area,LoopNet,2026-09-01,New,4200000,310,48000,6.25,,,,Dylan,"
+                "\nSunrise Storage,123 Main St,San Jose,CA,Bay Area,LoopNet,2026-09-01,New,4200000,310,48000,6.25,,,,Dylan,"
               }
               className="font-mono text-xs"
             />
@@ -164,8 +172,10 @@ export function BulkAddDialog() {
             <p className="text-muted-foreground text-xs">
               Recognized columns: {TEMPLATE_HEADERS.join(", ")}. Only{" "}
               <span className="font-medium">propertyName</span> is required;
-              anything else can be blank. Market and stage accept friendly names
-              (&ldquo;Bay Area&rdquo;, &ldquo;Underwriting / Offer&rdquo;).
+              anything else can be blank. <span className="font-medium">market</span>{" "}
+              matches a market name or slug; leave it blank and set{" "}
+              <span className="font-medium">state</span> to auto-assign. Stage
+              accepts friendly names (&ldquo;Underwriting / Offer&rdquo;).
             </p>
 
             {parseNote ? (
@@ -229,7 +239,15 @@ export function BulkAddDialog() {
                         )}
                       </td>
                       <td className="px-3 py-1.5">
-                        {r.data ? MARKET_LABELS[r.data.market] : "—"}
+                        <span
+                          className={
+                            r.data && marketNameFor(r) === "Needs assignment"
+                              ? "text-amber-700"
+                              : ""
+                          }
+                        >
+                          {marketNameFor(r)}
+                        </span>
                       </td>
                       <td className="px-3 py-1.5">
                         {r.data ? STAGE_LABELS[r.data.stage as Stage] : "—"}

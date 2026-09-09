@@ -14,6 +14,11 @@ const LINKS = [
     label: "Clients",
     match: (p: string) => p.startsWith("/dashboard/clients"),
   },
+  {
+    href: "/dashboard/markets",
+    label: "Markets",
+    match: (p: string) => p.startsWith("/dashboard/markets"),
+  },
 ];
 
 export function DashboardNav() {

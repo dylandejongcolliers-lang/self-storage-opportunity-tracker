@@ -9,17 +9,21 @@ export const metadata = { title: "Clients" };
 export default async function ClientsPage() {
   await requireAuth();
 
-  const [clients, listings] = await Promise.all([
+  const [clients, listings, markets] = await Promise.all([
     prisma.client.findMany({
       orderBy: { name: "asc" },
       include: {
         matches: {
           orderBy: { matchedAt: "desc" },
-          include: { listing: true },
+          include: { listing: { include: { market: true } } },
         },
       },
     }),
-    prisma.listing.findMany({ orderBy: { dateFirstSeen: "desc" } }),
+    prisma.listing.findMany({
+      orderBy: { dateFirstSeen: "desc" },
+      include: { market: true },
+    }),
+    prisma.market.findMany({ orderBy: { sortOrder: "asc" } }),
   ]);
 
   return (
@@ -33,7 +37,7 @@ export default async function ClientsPage() {
             {clients.length} {clients.length === 1 ? "client" : "clients"}
           </p>
         </div>
-        <AddClientDialog />
+        <AddClientDialog markets={markets} />
       </div>
 
       {clients.length === 0 ? (
@@ -52,7 +56,15 @@ export default async function ClientsPage() {
             const suggestions = listings.filter(
               (l) =>
                 !matchedListingIds.has(l.id) &&
-                listingMatchesBuyBox(l, client),
+                listingMatchesBuyBox(
+                  {
+                    marketSlug: l.market?.slug ?? null,
+                    askingPrice: l.askingPrice,
+                    capRate: l.capRate,
+                    unitCount: l.unitCount,
+                  },
+                  client,
+                ),
             );
             return (
               <ClientCard
@@ -60,6 +72,7 @@ export default async function ClientsPage() {
                 client={client}
                 matches={client.matches}
                 suggestions={suggestions}
+                markets={markets}
               />
             );
           })}

@@ -1,20 +1,6 @@
 // Shared labels and formatting for Listing enums. Safe to import from client
 // components (no server-only code here).
-
-export const MARKETS = [
-  "BayArea",
-  "SanDiego",
-  "RenoNorthernNV",
-  "Other",
-] as const;
-export type Market = (typeof MARKETS)[number];
-
-export const MARKET_LABELS: Record<Market, string> = {
-  BayArea: "Bay Area",
-  SanDiego: "San Diego",
-  RenoNorthernNV: "Reno / Northern NV",
-  Other: "Other",
-};
+// Market is no longer an enum — see src/lib/markets.ts and the Market table.
 
 export const STAGES = ["New", "TeamReviewed", "UnderwritingOffer"] as const;
 export type Stage = (typeof STAGES)[number];
@@ -58,10 +44,6 @@ export const SORT_LABELS: Record<SortKey, string> = {
   property: "Property name (A–Z)",
   stage: "Stage",
 };
-
-export function isMarket(v: unknown): v is Market {
-  return typeof v === "string" && (MARKETS as readonly string[]).includes(v);
-}
 
 export function isStage(v: unknown): v is Stage {
   return typeof v === "string" && (STAGES as readonly string[]).includes(v);

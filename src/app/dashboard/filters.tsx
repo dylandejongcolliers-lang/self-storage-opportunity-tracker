@@ -4,31 +4,30 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  MARKETS,
-  MARKET_LABELS,
-  SORTS,
-  SORT_LABELS,
-  STAGES,
-  STAGE_LABELS,
-} from "@/lib/listings";
+import { SORTS, SORT_LABELS, STAGES, STAGE_LABELS } from "@/lib/listings";
+import { groupByRegion, type MarketLite } from "@/lib/markets";
 
 export function Filters({
   market,
   stage,
   sort,
+  markets,
 }: {
   market: string;
   stage: string;
   sort: string;
+  markets: MarketLite[];
 }) {
   const router = useRouter();
   const params = useSearchParams();
+  const groups = groupByRegion(markets);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
@@ -46,15 +45,22 @@ export function Filters({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select value={market} onValueChange={(v) => setParam("market", v)}>
-        <SelectTrigger className="w-[170px]" size="sm">
+        <SelectTrigger className="w-[190px]" size="sm">
           <SelectValue placeholder="Market" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All markets</SelectItem>
-          {MARKETS.map((m) => (
-            <SelectItem key={m} value={m}>
-              {MARKET_LABELS[m]}
-            </SelectItem>
+          <SelectItem value="unassigned">Needs assignment</SelectItem>
+          {groups.map(({ region, markets: list }) => (
+            <SelectGroup key={region}>
+              <SelectLabel>{region}</SelectLabel>
+              {list.map((m) => (
+                <SelectItem key={m.id} value={m.slug}>
+                  {m.name}
+                  {m.active ? "" : " · inactive"}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           ))}
         </SelectContent>
       </Select>

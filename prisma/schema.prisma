@@ -11,14 +11,6 @@ datasource db {
   directUrl = env("DIRECT_URL")     // direct connection, used for migrations
 }
 
-/// The three markets we actively track, plus a catch-all.
-enum Market {
-  BayArea
-  SanDiego
-  RenoNorthernNV
-  Other
-}
-
 /// Where a listing sits in our pipeline.
 enum Stage {
   New
@@ -40,12 +32,37 @@ enum WeekStatus {
   Passed
 }
 
+/// A geographic market, managed at runtime from the "Manage Markets" page.
+model Market {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  /// Broad tier, e.g. "West Coast", "Southwest", "National". Free text.
+  region    String   @default("")
+  /// USPS state codes this market covers, e.g. ["CA", "NV"]. Used to
+  /// auto-assign a market when a listing has a state but no market.
+  states    String[]
+  color     String   @default("#64748b")
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings  Listing[]
+
+  @@index([active])
+}
+
 /// A single self-storage sale opportunity.
 model Listing {
   id            String      @id @default(cuid())
   propertyName  String
   address       String      @default("")
-  market        Market      @default(Other)
+  city          String?
+  state         String?     // USPS code
+  marketId      String?
+  market        Market?     @relation(fields: [marketId], references: [id], onDelete: SetNull)
   source        String      @default("")
   dateFirstSeen DateTime    @default(now())
   stage         Stage       @default(New)
@@ -66,7 +83,7 @@ model Listing {
 
   matches       ListingClientMatch[]
 
-  @@index([market])
+  @@index([marketId])
   @@index([stage])
 }
 
@@ -77,7 +94,8 @@ model Client {
   /// Unguessable token in the client-facing URL: /share/<shareToken>
   shareToken        String   @unique
 
-  buyBoxMarkets     Market[]
+  /// Market slugs this client is interested in (loose reference to Market.slug).
+  buyBoxMarkets     String[]
   buyBoxPriceMin    Int?
   buyBoxPriceMax    Int?
   buyBoxCapRateMin  Float?

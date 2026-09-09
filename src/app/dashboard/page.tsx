@@ -1,7 +1,8 @@
 import type { Prisma } from "@prisma/client";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { isMarket, isSortKey, isStage, type SortKey } from "@/lib/listings";
+import { isSortKey, isStage, type SortKey } from "@/lib/listings";
 import { Filters } from "./filters";
 import { AddListingDialog } from "./add-listing-dialog";
 import { BulkAddDialog } from "./bulk-add-dialog";
@@ -40,20 +41,34 @@ export default async function DashboardPage({
   const sortParam = typeof sp.sort === "string" ? sp.sort : undefined;
   const sort: SortKey = isSortKey(sortParam) ? sortParam : "newest";
 
-  const where: Prisma.ListingWhereInput = {};
-  if (isMarket(marketParam)) where.market = marketParam;
-  if (isStage(stageParam)) where.stage = stageParam;
+  const markets = await prisma.market.findMany({ orderBy: { sortOrder: "asc" } });
+  const marketSlugs = new Set(markets.map((m) => m.slug));
 
-  const [listings, total] = await Promise.all([
-    prisma.listing.findMany({ where, orderBy: orderByFor(sort) }),
+  const where: Prisma.ListingWhereInput = {};
+  if (stageParam && isStage(stageParam)) where.stage = stageParam;
+  let marketFilter: string = "all";
+  if (marketParam === "unassigned") {
+    where.marketId = null;
+    marketFilter = "unassigned";
+  } else if (marketParam && marketSlugs.has(marketParam)) {
+    where.market = { slug: marketParam };
+    marketFilter = marketParam;
+  }
+
+  const [listings, total, needsMarket] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      orderBy: orderByFor(sort),
+      include: { market: true },
+    }),
     prisma.listing.count(),
+    prisma.listing.count({ where: { marketId: null } }),
   ]);
 
   const filtered = listings.length !== total;
 
   return (
     <div className="space-y-6">
-      {/* Page title */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -63,24 +78,35 @@ export default async function DashboardPage({
             {filtered
               ? `${listings.length} of ${total} listings`
               : `${total} ${total === 1 ? "listing" : "listings"} tracked`}
+            {needsMarket > 0 ? (
+              <>
+                {" · "}
+                <Link
+                  href="/dashboard?market=unassigned"
+                  className="font-medium text-amber-700 hover:underline"
+                >
+                  {needsMarket} need market
+                </Link>
+              </>
+            ) : null}
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <BulkAddDialog />
-          <AddListingDialog />
+          <BulkAddDialog markets={markets} />
+          <AddListingDialog markets={markets} />
         </div>
       </div>
 
-      {/* Table card with its own toolbar */}
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50/60 px-4 py-3">
           <Filters
-            market={isMarket(marketParam) ? marketParam : "all"}
-            stage={isStage(stageParam) ? stageParam : "all"}
+            market={marketFilter}
+            stage={stageParam && isStage(stageParam) ? stageParam : "all"}
             sort={sort}
+            markets={markets}
           />
         </div>
-        <ListingsTable listings={listings} />
+        <ListingsTable listings={listings} markets={markets} />
       </section>
     </div>
   );

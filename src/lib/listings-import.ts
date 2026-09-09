@@ -1,19 +1,15 @@
 // Parse pasted spreadsheet rows or CSV text into Listing create-data.
 // Pure functions — safe to unit test and to import from client components.
+// Market is resolved later (server-side) from `marketRaw` / `state`.
 
-import {
-  MARKETS,
-  STAGES,
-  ASSIGNEES,
-  type Market,
-  type Stage,
-  type Assignee,
-} from "@/lib/listings";
+import { STAGES, ASSIGNEES, type Stage, type Assignee } from "@/lib/listings";
 
 export type ListingImportData = {
   propertyName: string;
   address: string;
-  market: Market;
+  city: string;
+  state: string;
+  marketRaw: string;
   source: string;
   dateFirstSeen: Date;
   stage: Stage;
@@ -47,7 +43,12 @@ const HEADER_ALIASES: Record<string, FieldKey> = {
   property: "propertyName",
   name: "propertyName",
   address: "address",
-  market: "market",
+  city: "city",
+  state: "state",
+  st: "state",
+  province: "state",
+  market: "marketRaw",
+  submarket: "marketRaw",
   source: "source",
   datefirstseen: "dateFirstSeen",
   date: "dateFirstSeen",
@@ -82,6 +83,8 @@ const HEADER_ALIASES: Record<string, FieldKey> = {
 export const TEMPLATE_HEADERS = [
   "propertyName",
   "address",
+  "city",
+  "state",
   "market",
   "source",
   "dateFirstSeen",
@@ -102,7 +105,9 @@ export const TEMPLATE_CSV =
   "\n" +
   [
     "Example Storage",
-    "123 Main St, San Jose, CA",
+    "123 Main St",
+    "San Jose",
+    "CA",
     "Bay Area",
     "LoopNet",
     "2026-09-01",
@@ -238,16 +243,9 @@ function buildData(
     data: {
       propertyName,
       address: (rec.address ?? "").trim(),
-      market:
-        mapEnum<Market>(rec.market ?? "", MARKETS, {
-          bayarea: "BayArea",
-          sfbayarea: "BayArea",
-          sandiego: "SanDiego",
-          reno: "RenoNorthernNV",
-          northernnv: "RenoNorthernNV",
-          nv: "RenoNorthernNV",
-          nevada: "RenoNorthernNV",
-        }) ?? "Other",
+      city: (rec.city ?? "").trim(),
+      state: (rec.state ?? "").trim(),
+      marketRaw: (rec.marketRaw ?? "").trim(),
       source: (rec.source ?? "").trim(),
       dateFirstSeen: parseDateLoose(rec.dateFirstSeen ?? ""),
       stage:

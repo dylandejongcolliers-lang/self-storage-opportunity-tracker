@@ -16,13 +16,14 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import {
   ASSIGNEES,
-  MARKET_LABELS,
   STAGES,
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
@@ -33,12 +34,19 @@ import {
   type Assignee,
   type Stage,
 } from "@/lib/listings";
+import { groupByRegion, type MarketLite } from "@/lib/markets";
 import { deleteListing, updateListingFields } from "./actions";
 import { EditListingDialog } from "./edit-listing-dialog";
 
+export type ListingRow = Listing & { market: MarketLite | null };
+
 type PatchFn = (
   id: string,
-  fields: { stage?: Stage; assignedTo?: Assignee | null },
+  fields: {
+    stage?: Stage;
+    assignedTo?: Assignee | null;
+    marketId?: string | null;
+  },
 ) => void;
 
 function Chevron({ open }: { open: boolean }) {
@@ -64,6 +72,25 @@ function StageBadge({ stage }: { stage: Stage }) {
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE_CLASS[stage]}`}
     >
       {STAGE_LABELS[stage]}
+    </span>
+  );
+}
+
+function MarketBadge({ market }: { market: MarketLite | null }) {
+  if (!market) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/25">
+        Needs market
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+      <span
+        className="size-2 rounded-full"
+        style={{ backgroundColor: market.color }}
+      />
+      {market.name}
     </span>
   );
 }
@@ -106,19 +133,51 @@ function DetailField({
 /** The expanded detail body — shared by the desktop row and the mobile card. */
 function ListingDetail({
   listing,
+  markets,
   patch,
   onRemove,
   pending,
 }: {
-  listing: Listing;
+  listing: ListingRow;
+  markets: MarketLite[];
   patch: PatchFn;
-  onRemove: (l: Listing) => void;
+  onRemove: (l: ListingRow) => void;
   pending: boolean;
 }) {
   const l = listing;
+  const groups = groupByRegion(markets.filter((m) => m.active || m.id === l.marketId));
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-x-8 gap-y-3">
+        <div>
+          <dt className="text-xs font-medium text-slate-500">Market</dt>
+          <dd className="mt-1">
+            <Select
+              value={l.marketId ?? "none"}
+              onValueChange={(v) =>
+                patch(l.id, { marketId: v === "none" ? null : v })
+              }
+            >
+              <SelectTrigger size="sm" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {groups.map(({ region, markets: list }) => (
+                  <SelectGroup key={region}>
+                    <SelectLabel>{region}</SelectLabel>
+                    {list.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </dd>
+        </div>
         <div>
           <dt className="text-xs font-medium text-slate-500">Stage</dt>
           <dd className="mt-1">
@@ -167,11 +226,15 @@ function ListingDetail({
       </div>
 
       <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+        <DetailField label="City">
+          {l.city || <span className="text-slate-400">—</span>}
+        </DetailField>
+        <DetailField label="State">
+          {l.state || <span className="text-slate-400">—</span>}
+        </DetailField>
         <DetailField label="Units">{formatNumber(l.unitCount)}</DetailField>
         <DetailField label="NRSF">{formatNumber(l.nrsf)}</DetailField>
-        <DetailField label="First seen">
-          {formatDate(l.dateFirstSeen)}
-        </DetailField>
+        <DetailField label="First seen">{formatDate(l.dateFirstSeen)}</DetailField>
         <DetailField label="Source">
           {l.source || <span className="text-slate-400">—</span>}
         </DetailField>
@@ -194,7 +257,7 @@ function ListingDetail({
       </div>
 
       <div className="flex items-center gap-2 pt-1">
-        <EditListingDialog listing={l} />
+        <EditListingDialog listing={l} markets={markets} />
         <Button
           variant="ghost"
           size="sm"
@@ -209,7 +272,13 @@ function ListingDetail({
   );
 }
 
-export function ListingsTable({ listings }: { listings: Listing[] }) {
+export function ListingsTable({
+  listings,
+  markets,
+}: {
+  listings: ListingRow[];
+  markets: MarketLite[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -225,7 +294,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
     });
   };
 
-  function remove(listing: Listing) {
+  function remove(listing: ListingRow) {
     if (
       !window.confirm(`Delete "${listing.propertyName}"? This cannot be undone.`)
     ) {
@@ -285,9 +354,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
                     </span>
                   ) : null}
                   <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                      {MARKET_LABELS[l.market]}
-                    </span>
+                    <MarketBadge market={l.market} />
                     <StageBadge stage={l.stage as Stage} />
                   </span>
                 </span>
@@ -305,6 +372,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
                 <div className="mt-4 border-t border-slate-100 pt-4">
                   <ListingDetail
                     listing={l}
+                    markets={markets}
                     patch={patch}
                     onRemove={remove}
                     pending={pending}
@@ -318,9 +386,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
 
       {/* Desktop: table */}
       <div className="hidden md:block">
-        <Table
-          className={pending ? "opacity-60 transition-opacity" : undefined}
-        >
+        <Table className={pending ? "opacity-60 transition-opacity" : undefined}>
           <TableHeader>
             <TableRow className="border-slate-200 hover:bg-transparent [&>th]:h-11 [&>th]:text-[13px] [&>th]:font-semibold [&>th]:text-slate-700">
               <TableHead className="w-10" />
@@ -358,9 +424,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
                       ) : null}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                        {MARKET_LABELS[l.market]}
-                      </span>
+                      <MarketBadge market={l.market} />
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <StageBadge stage={l.stage as Stage} />
@@ -377,6 +441,7 @@ export function ListingsTable({ listings }: { listings: Listing[] }) {
                       <TableCell colSpan={6} className="px-6 py-5">
                         <ListingDetail
                           listing={l}
+                          markets={markets}
                           patch={patch}
                           onRemove={remove}
                           pending={pending}
