@@ -160,6 +160,7 @@ export default async function DashboardPage({
           listings={listings}
           markets={markets}
           boards={boards}
+          clients={clients}
           activeBoardId={activeBoard?.id}
           emptyReview={view === "review"}
           emptyBoard={view === "board"}

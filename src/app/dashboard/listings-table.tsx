@@ -40,6 +40,8 @@ import { deleteListing, updateListingFields } from "./actions";
 import { removeListingsFromBoard } from "./board-actions";
 import { EditListingDialog } from "./edit-listing-dialog";
 import { PushToBoardDialog } from "./push-to-board-dialog";
+import { MatchToClientDialog, type ClientLite } from "./match-to-client-dialog";
+import { FlagForReviewDialog } from "./flag-for-review-dialog";
 
 export type ListingRow = Listing & {
   market: MarketLite | null;
@@ -152,6 +154,8 @@ function ListingDetail({
   patch,
   onRemove,
   onPush,
+  onMatch,
+  onFlag,
   onRemoveFromBoard,
   activeBoardId,
   pending,
@@ -161,6 +165,8 @@ function ListingDetail({
   patch: PatchFn;
   onRemove: (l: ListingRow) => void;
   onPush: (id: string) => void;
+  onMatch: (id: string) => void;
+  onFlag: (id: string) => void;
   onRemoveFromBoard: (id: string) => void;
   activeBoardId?: string;
   pending: boolean;
@@ -310,10 +316,28 @@ function ListingDetail({
           variant="outline"
           size="sm"
           disabled={pending}
+          onClick={() => onMatch(l.id)}
+        >
+          Push to client buy box
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={pending}
           onClick={() => onPush(l.id)}
         >
-          Push to client
+          Add to board
         </Button>
+        {!l.flaggedForReview ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={() => onFlag(l.id)}
+          >
+            Flag for review
+          </Button>
+        ) : null}
         {activeBoardId ? (
           <Button
             variant="ghost"
@@ -342,6 +366,7 @@ export function ListingsTable({
   listings,
   markets,
   boards,
+  clients,
   activeBoardId,
   emptyReview = false,
   emptyBoard = false,
@@ -349,6 +374,7 @@ export function ListingsTable({
   listings: ListingRow[];
   markets: MarketLite[];
   boards: BoardLite[];
+  clients: ClientLite[];
   activeBoardId?: string;
   emptyReview?: boolean;
   emptyBoard?: boolean;
@@ -359,6 +385,10 @@ export function ListingsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pushOpen, setPushOpen] = useState(false);
   const [pushIds, setPushIds] = useState<string[]>([]);
+  const [matchOpen, setMatchOpen] = useState(false);
+  const [matchIds, setMatchIds] = useState<string[]>([]);
+  const [flagOpen, setFlagOpen] = useState(false);
+  const [flagIds, setFlagIds] = useState<string[]>([]);
 
   const patch: PatchFn = (id, fields) => {
     startTransition(async () => {
@@ -409,6 +439,16 @@ export function ListingsTable({
     setPushOpen(true);
   }
 
+  function openMatch(ids: string[]) {
+    setMatchIds(ids);
+    setMatchOpen(true);
+  }
+
+  function openFlag(ids: string[]) {
+    setFlagIds(ids);
+    setFlagOpen(true);
+  }
+
   function toggle(id: string) {
     setOpenId((cur) => (cur === id ? null : id));
   }
@@ -443,7 +483,7 @@ export function ListingsTable({
           {emptyReview
             ? "Nothing needs a market assignment or is flagged for review."
             : emptyBoard
-              ? "Use “Push to client” on any listing to add it here."
+              ? "Use “Add to board” on any listing to add it here."
               : "Use “Add listing” or “Bulk add” to enter your first opportunities."}
         </p>
       </div>
@@ -510,6 +550,8 @@ export function ListingsTable({
                     patch={patch}
                     onRemove={remove}
                     onPush={(id) => openPush([id])}
+                    onMatch={(id) => openMatch([id])}
+                    onFlag={(id) => openFlag([id])}
                     onRemoveFromBoard={(id) => removeFromBoard([id])}
                     activeBoardId={activeBoardId}
                     pending={pending}
@@ -606,6 +648,8 @@ export function ListingsTable({
                           patch={patch}
                           onRemove={remove}
                           onPush={(id) => openPush([id])}
+                          onMatch={(id) => openMatch([id])}
+                          onFlag={(id) => openFlag([id])}
                           onRemoveFromBoard={(id) => removeFromBoard([id])}
                           activeBoardId={activeBoardId}
                           pending={pending}
@@ -629,9 +673,25 @@ export function ListingsTable({
           <Button
             size="sm"
             disabled={pending}
+            onClick={() => openMatch([...selected])}
+          >
+            Push to client buy box
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
             onClick={() => openPush([...selected])}
           >
-            Push to client
+            Add to board
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={() => openFlag([...selected])}
+          >
+            Flag for review
           </Button>
           {activeBoardId ? (
             <Button
@@ -659,6 +719,19 @@ export function ListingsTable({
         onOpenChange={setPushOpen}
         listingIds={pushIds}
         boards={boards}
+        onDone={() => setSelected(new Set())}
+      />
+      <MatchToClientDialog
+        open={matchOpen}
+        onOpenChange={setMatchOpen}
+        listingIds={matchIds}
+        clients={clients}
+        onDone={() => setSelected(new Set())}
+      />
+      <FlagForReviewDialog
+        open={flagOpen}
+        onOpenChange={setFlagOpen}
+        listingIds={flagIds}
         onDone={() => setSelected(new Set())}
       />
     </>

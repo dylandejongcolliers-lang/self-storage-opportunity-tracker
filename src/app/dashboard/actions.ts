@@ -183,6 +183,31 @@ export async function updateListingFields(
   return { ok: true };
 }
 
+/** Manually flag one or more listings for review (single or bulk). Leaves an
+ *  already-flagged listing's existing reason alone unless a new one is given. */
+export async function flagListingsForReview(
+  listingIds: string[],
+  reason = "",
+): Promise<{ ok: boolean; count?: number }> {
+  await requireAuth();
+
+  const ids = [...new Set(listingIds)];
+  if (ids.length === 0) return { ok: false };
+
+  try {
+    const res = await prisma.listing.updateMany({
+      where: { id: { in: ids } },
+      data: reason
+        ? { flaggedForReview: true, flagReason: reason }
+        : { flaggedForReview: true },
+    });
+    revalidatePath("/dashboard");
+    return { ok: true, count: res.count };
+  } catch {
+    return { ok: false };
+  }
+}
+
 export async function createListingsBulk(
   rows: ListingImportData[],
 ): Promise<{
