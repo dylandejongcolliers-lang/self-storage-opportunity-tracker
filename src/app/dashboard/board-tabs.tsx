@@ -66,7 +66,7 @@ export function BoardTabs({
 
       {boards.length === 0 ? (
         <span className="text-sm text-slate-400">
-          none yet — use “Push to client” on a listing
+          none yet — use “Add to board” on a listing
         </span>
       ) : (
         boards.map((b) => {

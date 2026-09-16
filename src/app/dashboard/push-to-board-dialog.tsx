@@ -96,7 +96,7 @@ function PushBody({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Push to client board</DialogTitle>
+        <DialogTitle>Add to board</DialogTitle>
         <DialogDescription>
           {count === 1
             ? "Add this listing to a client board."
