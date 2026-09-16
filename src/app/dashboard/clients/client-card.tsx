@@ -31,6 +31,7 @@ import {
 } from "@/lib/clients";
 import {
   confirmMatch,
+  confirmMatches,
   deleteClient,
   regenerateShareToken,
   removeMatch,
@@ -55,6 +56,7 @@ export function ClientCard({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const marketName = (slug: string) =>
     markets.find((m) => m.slug === slug)?.name ?? slug;
@@ -66,6 +68,43 @@ export function ClientCard({
         toast.error(errorMsg);
         return;
       }
+      router.refresh();
+    });
+  }
+
+  function toggleSuggestion(id: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSuggestionsSelected =
+    suggestions.length > 0 && suggestions.every((l) => selected.has(l.id));
+
+  function toggleSelectAllSuggestions() {
+    setSelected(
+      allSuggestionsSelected ? new Set() : new Set(suggestions.map((l) => l.id)),
+    );
+  }
+
+  function confirmSelected() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    startTransition(async () => {
+      const res = await confirmMatches(ids, client.id);
+      if (!res.ok) {
+        toast.error("Could not confirm those matches.");
+        return;
+      }
+      toast.success(
+        res.count === 1
+          ? "Confirmed 1 match."
+          : `Confirmed ${res.count} matches.`,
+      );
+      setSelected(new Set());
       router.refresh();
     });
   }
@@ -184,9 +223,21 @@ export function ClientCard({
 
         {/* Suggestions from the buy box */}
         <div>
-          <h3 className="text-sm font-semibold">
-            Suggested from buy box ({suggestions.length})
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">
+              Suggested from buy box ({suggestions.length})
+            </h3>
+            {suggestions.length > 0 ? (
+              <button
+                type="button"
+                onClick={toggleSelectAllSuggestions}
+                className="text-muted-foreground hover:text-foreground text-xs underline"
+              >
+                {allSuggestionsSelected ? "Clear" : "Select all"}
+              </button>
+            ) : null}
+          </div>
+
           <div className="mt-2 space-y-2">
             {suggestions.length === 0 ? (
               <p className="text-muted-foreground text-sm">
@@ -196,9 +247,16 @@ export function ClientCard({
               suggestions.map((l) => (
                 <div
                   key={l.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border p-2.5"
+                  className="flex items-center gap-3 rounded-lg border p-2.5"
                 >
-                  <div className="min-w-0">
+                  <input
+                    type="checkbox"
+                    className="size-4 shrink-0 rounded border-slate-300"
+                    checked={selected.has(l.id)}
+                    onChange={() => toggleSuggestion(l.id)}
+                    aria-label={`Select ${l.propertyName}`}
+                  />
+                  <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">
                       {l.propertyName}
                     </div>
@@ -211,6 +269,7 @@ export function ClientCard({
                   <Button
                     size="sm"
                     variant="outline"
+                    className="shrink-0"
                     disabled={pending}
                     onClick={() =>
                       run(
@@ -225,6 +284,30 @@ export function ClientCard({
               ))
             )}
           </div>
+
+          {selected.size > 0 ? (
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-inset ring-slate-200">
+              <span className="text-sm font-medium text-slate-900">
+                {selected.size} selected
+              </span>
+              <Button
+                size="sm"
+                className="ml-auto"
+                disabled={pending}
+                onClick={confirmSelected}
+              >
+                Confirm selected
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => setSelected(new Set())}
+              >
+                Clear
+              </Button>
+            </div>
+          ) : null}
 
           <button
             type="button"

@@ -124,6 +124,33 @@ export async function confirmMatch(
   return { ok: true };
 }
 
+/** Confirm several suggested listings for a client at once. Idempotent. */
+export async function confirmMatches(
+  listingIds: string[],
+  clientId: string,
+): Promise<{ ok: boolean; count?: number }> {
+  await requireAuth();
+
+  const ids = [...new Set(listingIds)];
+  if (ids.length === 0) return { ok: false };
+
+  try {
+    await prisma.$transaction(
+      ids.map((listingId) =>
+        prisma.listingClientMatch.upsert({
+          where: { listingId_clientId: { listingId, clientId } },
+          create: { listingId, clientId, weekStatus: "New" },
+          update: {},
+        }),
+      ),
+    );
+  } catch {
+    return { ok: false };
+  }
+  revalidatePath("/dashboard/clients");
+  return { ok: true, count: ids.length };
+}
+
 export async function updateMatch(
   id: string,
   fields: { clientFacingNotes?: string; weekStatus?: WeekStatus },
