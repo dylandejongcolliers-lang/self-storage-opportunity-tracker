@@ -42,6 +42,23 @@ import { EditClientDialog } from "./edit-client-dialog";
 type ListingWithMarket = Listing & { market: MarketLite | null };
 type MatchWithListing = ListingClientMatch & { listing: ListingWithMarket };
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`mt-1 size-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-90" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M7 5l6 5-6 5" />
+    </svg>
+  );
+}
+
 export function ClientCard({
   client,
   matches,
@@ -57,6 +74,7 @@ export function ClientCard({
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [collapsed, setCollapsed] = useState(false);
 
   const marketName = (slug: string) =>
     markets.find((m) => m.slug === slug)?.name ?? slug;
@@ -125,22 +143,32 @@ export function ClientCard({
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 p-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight">{client.name}</h2>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            {buyBoxSummary(client, marketName)}
-          </p>
-          {client.buyBoxNotes ? (
-            <p className="text-muted-foreground mt-1 text-xs italic">
-              {client.buyBoxNotes}
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          className="flex min-w-0 items-start gap-2 text-left"
+        >
+          <Chevron open={!collapsed} />
+          <span className="min-w-0">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {client.name}
+            </h2>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              {buyBoxSummary(client, marketName)}
             </p>
-          ) : null}
-          <p className="text-muted-foreground mt-1 text-xs">
-            {client.lastPublishedAt
-              ? `Last published ${formatDate(client.lastPublishedAt)}`
-              : "Never published"}
-          </p>
-        </div>
+            {client.buyBoxNotes ? (
+              <p className="text-muted-foreground mt-1 text-xs italic">
+                {client.buyBoxNotes}
+              </p>
+            ) : null}
+            <p className="text-muted-foreground mt-1 text-xs">
+              {client.lastPublishedAt
+                ? `Last published ${formatDate(client.lastPublishedAt)}`
+                : "Never published"}
+            </p>
+          </span>
+        </button>
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           <Button size="sm" asChild>
@@ -183,6 +211,7 @@ export function ClientCard({
         </div>
       </div>
 
+      {collapsed ? null : (
       <div className="grid gap-6 p-4 lg:grid-cols-2">
         {/* Confirmed matches */}
         <div>
@@ -323,6 +352,7 @@ export function ClientCard({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
