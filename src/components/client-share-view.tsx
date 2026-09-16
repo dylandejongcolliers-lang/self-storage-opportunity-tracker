@@ -1,5 +1,7 @@
+import Link from "next/link";
 import type { Listing, ListingClientMatch } from "@prisma/client";
 import { Logo } from "@/components/logo";
+import { ClientReactionPicker } from "@/components/client-reaction-picker";
 import {
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
@@ -12,6 +14,7 @@ import {
 import {
   WEEK_STATUS_BADGE,
   WEEK_STATUS_LABELS,
+  isClientReaction,
   type WeekStatus,
 } from "@/lib/clients";
 
@@ -27,10 +30,13 @@ export function ClientShareView({
   clientName,
   matches,
   updatedAt,
+  token,
 }: {
   clientName: string;
   matches: MatchWithListing[];
   updatedAt?: Date | null;
+  /** Omit in the internal publish preview to disable links/reactions there. */
+  token?: string;
 }) {
   return (
     <div className="min-h-full bg-slate-50">
@@ -80,7 +86,16 @@ export function ClientShareView({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                          {l.propertyName}
+                          {token ? (
+                            <Link
+                              href={`/share/${token}/listing/${l.id}`}
+                              className="hover:text-brand hover:underline"
+                            >
+                              {l.propertyName}
+                            </Link>
+                          ) : (
+                            l.propertyName
+                          )}
                         </h2>
                         {l.address ? (
                           <p className="text-sm text-slate-500">{l.address}</p>
@@ -133,6 +148,28 @@ export function ClientShareView({
                         </a>
                       </div>
                     ) : null}
+
+                    <div className="mt-4 border-t border-slate-100 pt-4">
+                      <p className="mb-2 text-xs font-medium text-slate-500">
+                        Your take on this one
+                      </p>
+                      {token ? (
+                        <ClientReactionPicker
+                          token={token}
+                          matchId={m.id}
+                          initialReaction={
+                            isClientReaction(m.clientReaction)
+                              ? m.clientReaction
+                              : null
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-400 italic">
+                          Clients can leave Review further / Maybe / Not
+                          interested here.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </li>
               );

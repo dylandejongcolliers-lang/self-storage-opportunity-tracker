@@ -25,7 +25,10 @@ import {
   WEEK_STATUSES,
   WEEK_STATUS_BADGE,
   WEEK_STATUS_LABELS,
+  CLIENT_REACTION_BADGE,
+  CLIENT_REACTION_LABELS,
   buyBoxSummary,
+  isClientReaction,
   sharePath,
   type WeekStatus,
 } from "@/lib/clients";
@@ -286,9 +289,12 @@ export function ClientCard({
                     aria-label={`Select ${l.propertyName}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">
+                    <Link
+                      href={`/dashboard/listings/${l.id}`}
+                      className="block truncate text-sm font-medium hover:underline"
+                    >
                       {l.propertyName}
-                    </div>
+                    </Link>
                     <div className="text-muted-foreground text-xs">
                       {l.market?.name ?? "Needs market"} ·{" "}
                       {formatMoney(l.askingPrice)} · {formatPercent(l.capRate)} ·{" "}
@@ -377,17 +383,31 @@ function MatchRow({
     <div className="rounded-lg border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-sm font-medium">{match.listing.propertyName}</div>
+          <Link
+            href={`/dashboard/listings/${match.listing.id}`}
+            className="text-sm font-medium hover:underline"
+          >
+            {match.listing.propertyName}
+          </Link>
           <div className="text-muted-foreground text-xs">
             {match.listing.market?.name ?? "Needs market"} ·{" "}
             {formatMoney(match.listing.askingPrice)}
           </div>
         </div>
-        <span
-          className={`shrink-0 rounded px-1.5 py-0.5 text-xs ${WEEK_STATUS_BADGE[match.weekStatus as WeekStatus]}`}
-        >
-          {WEEK_STATUS_LABELS[match.weekStatus as WeekStatus]}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span
+            className={`rounded px-1.5 py-0.5 text-xs ${WEEK_STATUS_BADGE[match.weekStatus as WeekStatus]}`}
+          >
+            {WEEK_STATUS_LABELS[match.weekStatus as WeekStatus]}
+          </span>
+          {isClientReaction(match.clientReaction) ? (
+            <span
+              className={`rounded px-1.5 py-0.5 text-xs ${CLIENT_REACTION_BADGE[match.clientReaction]}`}
+            >
+              {CLIENT_REACTION_LABELS[match.clientReaction]}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <Textarea

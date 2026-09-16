@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { isSortKey, isStage, type SortKey } from "@/lib/listings";
 import type { BoardLite } from "@/lib/boards";
 import { Filters } from "./filters";
+import { SearchBox } from "./search-box";
 import { ReviewTabs } from "./review-tabs";
 import { BoardTabs } from "./board-tabs";
 import { BoardSettings } from "./board-settings";
@@ -83,6 +84,7 @@ export default async function DashboardPage({
 
   const marketSlugs = new Set(markets.map((m) => m.slug));
   const where: Prisma.ListingWhereInput = {};
+  const and: Prisma.ListingWhereInput[] = [];
   if (stageParam && isStage(stageParam)) where.stage = stageParam;
   let marketFilter: string = "all";
   if (marketParam === "unassigned") {
@@ -92,8 +94,25 @@ export default async function DashboardPage({
     where.market = { slug: marketParam };
     marketFilter = marketParam;
   }
-  if (view === "review") where.OR = REVIEW_WHERE.OR;
+  if (view === "review") and.push({ OR: REVIEW_WHERE.OR });
   if (activeBoard) where.boardLinks = { some: { boardId: activeBoard.id } };
+
+  const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  if (q) {
+    and.push({
+      OR: [
+        { propertyName: { contains: q, mode: "insensitive" } },
+        { address: { contains: q, mode: "insensitive" } },
+        { city: { contains: q, mode: "insensitive" } },
+        { state: { contains: q, mode: "insensitive" } },
+        { source: { contains: q, mode: "insensitive" } },
+        { brokerContact: { contains: q, mode: "insensitive" } },
+        { internalNotes: { contains: q, mode: "insensitive" } },
+        { market: { name: { contains: q, mode: "insensitive" } } },
+      ],
+    });
+  }
+  if (and.length) where.AND = and;
 
   // boardLinks is scoped to the active board (or nothing when not on a board),
   // so every row carries a consistent shape.
@@ -137,6 +156,8 @@ export default async function DashboardPage({
           <AddListingDialog markets={markets} />
         </div>
       </div>
+
+      <SearchBox />
 
       <div className="space-y-3">
         <ReviewTabs view={view} reviewCount={reviewCount} />

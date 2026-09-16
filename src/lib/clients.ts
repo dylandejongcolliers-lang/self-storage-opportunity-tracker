@@ -30,6 +30,49 @@ export function isWeekStatus(v: unknown): v is WeekStatus {
   );
 }
 
+/** A client's own Green/Yellow/Red read on a listing, left from their share page. */
+export const CLIENT_REACTIONS = [
+  "ReviewFurther",
+  "Maybe",
+  "NotInterested",
+] as const;
+export type ClientReaction = (typeof CLIENT_REACTIONS)[number];
+
+export const CLIENT_REACTION_LABELS: Record<ClientReaction, string> = {
+  ReviewFurther: "Review further",
+  Maybe: "Maybe",
+  NotInterested: "Not interested",
+};
+
+/** Solid dot color per reaction — used on badges and the picker buttons. */
+export const CLIENT_REACTION_DOT: Record<ClientReaction, string> = {
+  ReviewFurther: "bg-emerald-500",
+  Maybe: "bg-amber-400",
+  NotInterested: "bg-red-500",
+};
+
+/** Selected-state pill styling per reaction, for the share-page picker. */
+export const CLIENT_REACTION_PILL: Record<ClientReaction, string> = {
+  ReviewFurther: "bg-emerald-600 text-white",
+  Maybe: "bg-amber-500 text-white",
+  NotInterested: "bg-red-600 text-white",
+};
+
+/** Badge styling for showing a client's reaction back to the internal team. */
+export const CLIENT_REACTION_BADGE: Record<ClientReaction, string> = {
+  ReviewFurther:
+    "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+  Maybe: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
+  NotInterested: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+};
+
+export function isClientReaction(v: unknown): v is ClientReaction {
+  return (
+    typeof v === "string" &&
+    (CLIENT_REACTIONS as readonly string[]).includes(v)
+  );
+}
+
 /** The buy-box fields we match on. `buyBoxMarkets` holds market slugs. */
 export type BuyBox = {
   buyBoxMarkets: string[];

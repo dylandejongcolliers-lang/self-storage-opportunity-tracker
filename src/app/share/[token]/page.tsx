@@ -50,6 +50,7 @@ export default async function SharePage({
       clientName={client.name}
       matches={client.matches}
       updatedAt={client.lastPublishedAt}
+      token={token}
     />
   );
 }
