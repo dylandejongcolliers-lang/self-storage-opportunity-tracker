@@ -164,7 +164,7 @@ export function BulkAddDialog({ markets }: { markets: MarketLite[] }) {
               rows={12}
               placeholder={
                 TEMPLATE_HEADERS.join(",") +
-                "\nSunrise Storage,123 Main St,San Jose,CA,Bay Area,LoopNet,2026-09-01,New,4200000,310,48000,6.25,,,,Dylan,"
+                "\nSunrise Storage,123 Main St,San Jose,CA,California,LoopNet,2026-09-01,New,4200000,310,48000,6.25,,,,Dylan,"
               }
               className="font-mono text-xs"
             />

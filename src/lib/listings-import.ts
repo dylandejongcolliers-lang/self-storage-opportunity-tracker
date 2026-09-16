@@ -108,7 +108,7 @@ export const TEMPLATE_CSV =
     "123 Main St",
     "San Jose",
     "CA",
-    "Bay Area",
+    "California",
     "LoopNet",
     "2026-09-01",
     "New",

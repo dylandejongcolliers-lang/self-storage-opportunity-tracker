@@ -1,12 +1,12 @@
 // Market helpers. Pure + client-safe (no DB access here).
 
+// Markets are US states now (see scripts/2026-09-16-seed-state-markets.mjs),
+// grouped by the standard Census Bureau regions.
 export const REGION_PRESETS = [
-  "West Coast",
-  "Southwest",
-  "Midwest",
-  "Southeast",
   "Northeast",
-  "National",
+  "Midwest",
+  "South",
+  "West",
 ] as const;
 
 /** A tasteful set of market colors (navy, evergreen, brass, steel, plum, clay…). */

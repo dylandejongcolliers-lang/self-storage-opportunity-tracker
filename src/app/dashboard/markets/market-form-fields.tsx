@@ -27,7 +27,7 @@ export function MarketFormFields({ market }: { market?: MarketLite }) {
           id="name"
           name="name"
           defaultValue={market?.name ?? ""}
-          placeholder="e.g. Phoenix Metro"
+          placeholder="e.g. Arizona"
           required
         />
       </div>
@@ -40,7 +40,7 @@ export function MarketFormFields({ market }: { market?: MarketLite }) {
             name="region"
             list="region-presets"
             defaultValue={market?.region ?? ""}
-            placeholder="West Coast"
+            placeholder="Northeast"
           />
           <datalist id="region-presets">
             {REGION_PRESETS.map((r) => (
@@ -67,7 +67,7 @@ export function MarketFormFields({ market }: { market?: MarketLite }) {
           name="states"
           value={statesRaw}
           onChange={(e) => setStatesRaw(e.target.value)}
-          placeholder="CA, NV"
+          placeholder="AZ"
         />
         <p className="text-xs text-slate-500">
           {preview.length
