@@ -35,8 +35,10 @@ export function ClientShareView({
   clientName: string;
   matches: MatchWithListing[];
   updatedAt?: Date | null;
-  /** Omit in the internal publish preview to disable links/reactions there. */
-  token?: string;
+  /** The client's real share token — always passed, including from the
+   *  internal publish preview, so every link (and the reaction picker)
+   *  works exactly the same way there as it does for the client. */
+  token: string;
 }) {
   return (
     <div className="min-h-full bg-slate-50">
@@ -86,16 +88,12 @@ export function ClientShareView({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                          {token ? (
-                            <Link
-                              href={`/share/${token}/listing/${l.id}`}
-                              className="hover:text-brand hover:underline"
-                            >
-                              {l.propertyName}
-                            </Link>
-                          ) : (
-                            l.propertyName
-                          )}
+                          <Link
+                            href={`/share/${token}/listing/${l.id}`}
+                            className="hover:text-brand hover:underline"
+                          >
+                            {l.propertyName}
+                          </Link>
                         </h2>
                         {l.address ? (
                           <p className="text-sm text-slate-500">{l.address}</p>
@@ -136,51 +134,33 @@ export function ClientShareView({
                       </p>
                     ) : null}
 
-                    {l.listingLink || l.dealRoomLink ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {l.listingLink ? (
-                          <a
-                            href={l.listingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                          >
-                            View full listing →
-                          </a>
-                        ) : null}
-                        {l.dealRoomLink ? (
-                          <a
-                            href={l.dealRoomLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-brand hover:bg-brand-dark inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-white transition-colors"
-                          >
-                            Open deal room →
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : null}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <ListingPageLink token={token} listing={l} />
+                      {l.dealRoomLink ? (
+                        <a
+                          href={l.dealRoomLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-brand hover:bg-brand-dark inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-white transition-colors"
+                        >
+                          Open deal room →
+                        </a>
+                      ) : null}
+                    </div>
 
                     <div className="mt-4 border-t border-slate-100 pt-4">
                       <p className="mb-2 text-xs font-medium text-slate-500">
                         Your take on this one
                       </p>
-                      {token ? (
-                        <ClientReactionPicker
-                          token={token}
-                          matchId={m.id}
-                          initialReaction={
-                            isClientReaction(m.clientReaction)
-                              ? m.clientReaction
-                              : null
-                          }
-                        />
-                      ) : (
-                        <p className="text-sm text-slate-400 italic">
-                          Clients can leave Review further / Maybe / Not
-                          interested here.
-                        </p>
-                      )}
+                      <ClientReactionPicker
+                        token={token}
+                        matchId={m.id}
+                        initialReaction={
+                          isClientReaction(m.clientReaction)
+                            ? m.clientReaction
+                            : null
+                        }
+                      />
                     </div>
                   </div>
                 </li>
@@ -194,6 +174,42 @@ export function ClientShareView({
         </p>
       </main>
     </div>
+  );
+}
+
+/**
+ * Always renders a clickable "View listing page" link — the original
+ * source (Crexi, a brokerage site, etc.) when we have one, otherwise our
+ * own listing detail page, so a client always has something to click
+ * through to.
+ */
+function ListingPageLink({
+  token,
+  listing,
+}: {
+  token: string;
+  listing: Listing;
+}) {
+  const className =
+    "inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50";
+
+  if (listing.listingLink) {
+    return (
+      <a
+        href={listing.listingLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+      >
+        View listing page →
+      </a>
+    );
+  }
+
+  return (
+    <Link href={`/share/${token}/listing/${listing.id}`} className={className}>
+      View listing page →
+    </Link>
   );
 }
 

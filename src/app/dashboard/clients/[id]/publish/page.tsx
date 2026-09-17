@@ -82,6 +82,7 @@ export default async function PublishPage({
             clientName={client.name}
             matches={client.matches}
             updatedAt={client.lastPublishedAt}
+            token={client.shareToken}
           />
         </div>
       </div>

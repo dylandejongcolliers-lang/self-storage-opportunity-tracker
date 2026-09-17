@@ -149,7 +149,7 @@ export default async function ClientListingPage({
                     rel="noopener noreferrer"
                     className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                   >
-                    View full listing →
+                    View listing page →
                   </a>
                 ) : null}
                 {l.dealRoomLink ? (
