@@ -140,16 +140,28 @@ export default async function ClientListingPage({
               </p>
             ) : null}
 
-            {l.dealRoomLink ? (
-              <div className="mt-5">
-                <a
-                  href={l.dealRoomLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-brand hover:bg-brand-dark inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-white transition-colors"
-                >
-                  Open deal room →
-                </a>
+            {l.listingLink || l.dealRoomLink ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {l.listingLink ? (
+                  <a
+                    href={l.listingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    View full listing →
+                  </a>
+                ) : null}
+                {l.dealRoomLink ? (
+                  <a
+                    href={l.dealRoomLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-brand hover:bg-brand-dark inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-white transition-colors"
+                  >
+                    Open deal room →
+                  </a>
+                ) : null}
               </div>
             ) : null}
 
