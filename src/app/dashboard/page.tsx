@@ -126,6 +126,9 @@ export default async function DashboardPage({
           where: { boardId: activeBoard?.id ?? "__no_board__" },
           select: { addedNote: true },
         },
+        matches: {
+          select: { client: { select: { id: true, name: true } } },
+        },
       },
     }),
     prisma.listing.count(),
