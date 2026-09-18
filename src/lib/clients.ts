@@ -30,6 +30,31 @@ export function isWeekStatus(v: unknown): v is WeekStatus {
   );
 }
 
+/** A rotating set of tag colors, one per client — picked deterministically
+ *  from the client's id so the same client always gets the same color
+ *  everywhere, with no color field to manage. Avoids amber/red/slate, which
+ *  already mean something else (flagged, not interested, default market). */
+const CLIENT_TAG_PALETTE = [
+  "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
+  "bg-blue-50 text-blue-700 ring-blue-600/20",
+  "bg-purple-50 text-purple-700 ring-purple-600/20",
+  "bg-teal-50 text-teal-700 ring-teal-600/20",
+  "bg-rose-50 text-rose-700 ring-rose-600/20",
+  "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
+  "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20",
+  "bg-orange-50 text-orange-700 ring-orange-600/20",
+  "bg-violet-50 text-violet-700 ring-violet-600/20",
+];
+
+export function clientTagClass(clientId: string): string {
+  let hash = 0;
+  for (let i = 0; i < clientId.length; i++) {
+    hash = (hash * 31 + clientId.charCodeAt(i)) | 0;
+  }
+  return CLIENT_TAG_PALETTE[Math.abs(hash) % CLIENT_TAG_PALETTE.length];
+}
+
 /** A client's own Green/Yellow/Red read on a listing, left from their share page. */
 export const CLIENT_REACTIONS = [
   "ReviewFurther",

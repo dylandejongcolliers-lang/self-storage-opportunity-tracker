@@ -35,6 +35,7 @@ import {
   type Stage,
 } from "@/lib/listings";
 import { groupByRegion, type MarketLite } from "@/lib/markets";
+import { clientTagClass } from "@/lib/clients";
 import type { BoardLite } from "@/lib/boards";
 import { deleteListing, updateListingFields } from "./actions";
 import { removeListingsFromBoard } from "./board-actions";
@@ -94,25 +95,19 @@ function FlaggedBadge() {
   );
 }
 
-function MatchedBadge({
+function ClientTags({
   matches,
 }: {
   matches: { client: { id: string; name: string } }[];
 }) {
-  if (matches.length === 0) return null;
-  const label =
-    matches.length === 1
-      ? `In ${matches[0].client.name}'s buy box`
-      : `In ${matches.length} buy boxes`;
-  const title = matches.map((m) => m.client.name).join(", ");
-  return (
+  return matches.map((m) => (
     <span
-      title={title}
-      className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20"
+      key={m.client.id}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${clientTagClass(m.client.id)}`}
     >
-      {label}
+      {m.client.name}
     </span>
-  );
+  ));
 }
 
 function MarketBadge({ market }: { market: MarketLite | null }) {
@@ -320,14 +315,7 @@ function ListingDetail({
             In buy box for
           </dt>
           <dd className="mt-1.5 flex flex-wrap gap-1.5">
-            {l.matches.map((m) => (
-              <span
-                key={m.client.id}
-                className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20"
-              >
-                {m.client.name}
-              </span>
-            ))}
+            <ClientTags matches={l.matches} />
           </dd>
         </div>
       ) : null}
@@ -569,7 +557,7 @@ export function ListingsTable({
                       <MarketBadge market={l.market} />
                       <StageBadge stage={l.stage as Stage} />
                       {l.flaggedForReview ? <FlaggedBadge /> : null}
-                      <MatchedBadge matches={l.matches} />
+                      <ClientTags matches={l.matches} />
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
@@ -668,7 +656,7 @@ export function ListingsTable({
                       <span className="inline-flex flex-wrap items-center gap-1.5">
                         <MarketBadge market={l.market} />
                         {l.flaggedForReview ? <FlaggedBadge /> : null}
-                        <MatchedBadge matches={l.matches} />
+                        <ClientTags matches={l.matches} />
                       </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
