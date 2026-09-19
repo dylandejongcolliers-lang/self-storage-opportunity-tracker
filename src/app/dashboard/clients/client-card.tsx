@@ -21,6 +21,7 @@ import {
   formatNumber,
 } from "@/lib/listings";
 import type { MarketLite } from "@/lib/markets";
+import { listingTitle } from "@/lib/listing-title";
 import {
   WEEK_STATUSES,
   WEEK_STATUS_BADGE,
@@ -292,8 +293,9 @@ export function ClientCard({
                     <Link
                       href={`/dashboard/listings/${l.id}`}
                       className="block truncate text-sm font-medium hover:underline"
+                      title={listingTitle(l)}
                     >
-                      {l.propertyName}
+                      {listingTitle(l)}
                     </Link>
                     <div className="text-muted-foreground text-xs">
                       {l.market?.name ?? "Needs market"} ·{" "}
@@ -387,7 +389,7 @@ function MatchRow({
             href={`/dashboard/listings/${match.listing.id}`}
             className="text-sm font-medium hover:underline"
           >
-            {match.listing.propertyName}
+            {listingTitle(match.listing)}
           </Link>
           <div className="text-muted-foreground text-xs">
             {match.listing.market?.name ?? "Needs market"} ·{" "}

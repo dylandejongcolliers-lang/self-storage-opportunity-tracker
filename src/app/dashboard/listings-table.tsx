@@ -36,6 +36,7 @@ import {
 } from "@/lib/listings";
 import { groupByRegion, type MarketLite } from "@/lib/markets";
 import { clientTagClass } from "@/lib/clients";
+import { listingTitle } from "@/lib/listing-title";
 import type { BoardLite } from "@/lib/boards";
 import { deleteListing, updateListingFields } from "./actions";
 import { removeListingsFromBoard } from "./board-actions";
@@ -546,13 +547,8 @@ export function ListingsTable({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium text-slate-900">
-                      {l.propertyName}
+                      {listingTitle(l)}
                     </span>
-                    {l.address ? (
-                      <span className="block text-xs text-slate-500">
-                        {l.address}
-                      </span>
-                    ) : null}
                     <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <MarketBadge market={l.market} />
                       <StageBadge stage={l.stage as Stage} />
@@ -566,6 +562,9 @@ export function ListingsTable({
                     </span>
                     <span className="block text-xs tabular-nums text-slate-500">
                       {formatPercent(l.capRate)} cap
+                    </span>
+                    <span className="block text-xs tabular-nums text-slate-500">
+                      {l.nrsf != null ? `${formatNumber(l.nrsf)} SF` : "— SF"}
                     </span>
                   </span>
                 </button>
@@ -613,8 +612,11 @@ export function ListingsTable({
               <TableHead className="whitespace-nowrap pr-4 text-right">
                 Asking price
               </TableHead>
-              <TableHead className="whitespace-nowrap pr-6 text-right">
+              <TableHead className="whitespace-nowrap pr-4 text-right">
                 Cap rate
+              </TableHead>
+              <TableHead className="whitespace-nowrap pr-6 text-right">
+                NRSF
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -646,14 +648,11 @@ export function ListingsTable({
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-slate-900">
-                        {l.propertyName}
+                        {listingTitle(l)}
                       </div>
-                      {l.address ? (
-                        <div className="text-xs text-slate-500">{l.address}</div>
-                      ) : null}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex max-w-[15rem] flex-wrap items-center gap-1.5">
                         <MarketBadge market={l.market} />
                         {l.flaggedForReview ? <FlaggedBadge /> : null}
                         <ClientTags matches={l.matches} />
@@ -665,13 +664,16 @@ export function ListingsTable({
                     <TableCell className="whitespace-nowrap pr-4 text-right font-medium tabular-nums text-slate-900">
                       {formatMoney(l.askingPrice)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap pr-6 text-right tabular-nums text-slate-700">
+                    <TableCell className="whitespace-nowrap pr-4 text-right tabular-nums text-slate-700">
                       {formatPercent(l.capRate)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap pr-6 text-right tabular-nums text-slate-700">
+                      {formatNumber(l.nrsf)}
                     </TableCell>
                   </TableRow>
                   {open ? (
                     <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
-                      <TableCell colSpan={7} className="px-6 py-5">
+                      <TableCell colSpan={8} className="px-6 py-5">
                         <ListingDetail
                           listing={l}
                           markets={markets}

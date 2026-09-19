@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Logo } from "@/components/logo";
 import { ClientReactionPicker } from "@/components/client-reaction-picker";
+import { listingTitle } from "@/lib/listing-title";
 import {
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
@@ -47,7 +48,7 @@ export async function generateMetadata({
   return {
     title: {
       absolute: found
-        ? found.match.listing.propertyName
+        ? listingTitle(found.match.listing)
         : "Self-Storage Opportunity Tracker",
     },
     robots: { index: false, follow: false },
@@ -100,11 +101,11 @@ export default async function ClientListingPage({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-                  {l.propertyName}
+                  {listingTitle(l)}
                 </h1>
-                {l.address || l.city || l.state ? (
+                {l.city || l.state ? (
                   <p className="mt-0.5 text-sm text-slate-500">
-                    {[l.address, l.city, l.state].filter(Boolean).join(", ")}
+                    {[l.city, l.state].filter(Boolean).join(", ")}
                   </p>
                 ) : null}
               </div>

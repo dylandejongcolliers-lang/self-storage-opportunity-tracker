@@ -20,6 +20,7 @@ import {
   isClientReaction,
   type WeekStatus,
 } from "@/lib/clients";
+import { listingTitle } from "@/lib/listing-title";
 import { EditListingDialog } from "../../edit-listing-dialog";
 import { DeleteListingButton } from "./delete-button";
 
@@ -31,9 +32,9 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await prisma.listing.findUnique({
     where: { id },
-    select: { propertyName: true },
+    select: { propertyName: true, address: true },
   });
-  return { title: listing?.propertyName ?? "Listing" };
+  return { title: listing ? listingTitle(listing) : "Listing" };
 }
 
 function ExternalLink({
@@ -110,13 +111,11 @@ export default async function ListingDetailPage({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-              {listing.propertyName}
+              {listingTitle(listing)}
             </h1>
-            {listing.address || listing.city || listing.state ? (
+            {listing.city || listing.state ? (
               <p className="mt-0.5 text-sm text-slate-500">
-                {[listing.address, listing.city, listing.state]
-                  .filter(Boolean)
-                  .join(", ")}
+                {[listing.city, listing.state].filter(Boolean).join(", ")}
               </p>
             ) : null}
           </div>

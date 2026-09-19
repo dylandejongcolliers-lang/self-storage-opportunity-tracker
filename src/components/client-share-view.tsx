@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Listing, ListingClientMatch } from "@prisma/client";
 import { Logo } from "@/components/logo";
 import { ClientReactionPicker } from "@/components/client-reaction-picker";
+import { listingTitle } from "@/lib/listing-title";
 import {
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
@@ -92,12 +93,9 @@ export function ClientShareView({
                             href={`/share/${token}/listing/${l.id}`}
                             className="hover:text-brand hover:underline"
                           >
-                            {l.propertyName}
+                            {listingTitle(l)}
                           </Link>
                         </h2>
-                        {l.address ? (
-                          <p className="text-sm text-slate-500">{l.address}</p>
-                        ) : null}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
