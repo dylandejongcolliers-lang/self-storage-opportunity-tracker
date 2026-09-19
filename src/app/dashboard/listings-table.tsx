@@ -523,7 +523,7 @@ export function ListingsTable({
     <>
       {/* Mobile: cards */}
       <ul
-        className={`divide-y divide-slate-200 md:hidden ${pending ? "opacity-60" : ""}`}
+        className={`divide-y divide-slate-200 lg:hidden ${pending ? "opacity-60" : ""}`}
       >
         {listings.map((l) => {
           const open = openId === l.id;
@@ -592,8 +592,13 @@ export function ListingsTable({
       </ul>
 
       {/* Desktop: table */}
-      <div className="hidden md:block">
-        <Table className={pending ? "opacity-60 transition-opacity" : undefined}>
+      <div className="hidden lg:block">
+        {/* Fixed layout: the data columns have set widths and the Property
+            column takes whatever is left (wrapping its text), so the table
+            always fits the page instead of scrolling sideways. */}
+        <Table
+          className={`table-fixed ${pending ? "opacity-60 transition-opacity" : ""}`}
+        >
           <TableHeader>
             <TableRow className="border-slate-200 hover:bg-transparent [&>th]:h-11 [&>th]:text-[13px] [&>th]:font-semibold [&>th]:text-slate-700">
               <TableHead className="w-10 pl-4">
@@ -606,16 +611,16 @@ export function ListingsTable({
                 />
               </TableHead>
               <TableHead className="w-8" />
-              <TableHead className="w-full">Property</TableHead>
-              <TableHead className="whitespace-nowrap">Market</TableHead>
-              <TableHead className="whitespace-nowrap">Stage</TableHead>
-              <TableHead className="whitespace-nowrap pr-4 text-right">
+              <TableHead>Property</TableHead>
+              <TableHead className="w-[210px]">Market</TableHead>
+              <TableHead className="w-[150px]">Stage</TableHead>
+              <TableHead className="w-[125px] whitespace-nowrap pr-4 text-right">
                 Asking price
               </TableHead>
-              <TableHead className="whitespace-nowrap pr-4 text-right">
+              <TableHead className="w-[95px] whitespace-nowrap pr-4 text-right">
                 Cap rate
               </TableHead>
-              <TableHead className="whitespace-nowrap pr-6 text-right">
+              <TableHead className="w-[115px] whitespace-nowrap pr-6 text-right">
                 NRSF
               </TableHead>
             </TableRow>
@@ -646,13 +651,13 @@ export function ListingsTable({
                     <TableCell>
                       <Chevron open={open} />
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-slate-900">
+                    <TableCell className="whitespace-normal">
+                      <div className="font-medium break-words text-slate-900">
                         {listingTitle(l)}
                       </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <span className="inline-flex max-w-[15rem] flex-wrap items-center gap-1.5">
+                    <TableCell className="whitespace-normal">
+                      <span className="flex flex-wrap items-center gap-1.5">
                         <MarketBadge market={l.market} />
                         {l.flaggedForReview ? <FlaggedBadge /> : null}
                         <ClientTags matches={l.matches} />
