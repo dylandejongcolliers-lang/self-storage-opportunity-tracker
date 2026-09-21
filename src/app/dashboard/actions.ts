@@ -3,7 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { isAssignee, isStage, type Assignee, type Stage } from "@/lib/listings";
+import {
+  isAssignee,
+  isReviewStatus,
+  isStage,
+  type Assignee,
+  type ReviewStatus,
+  type Stage,
+} from "@/lib/listings";
 import {
   matchMarket,
   normalizeState,
@@ -125,7 +132,7 @@ export async function updateListing(
   return { ok: true };
 }
 
-/** Fast path for the inline Stage / Assigned-to / Market dropdowns in the table. */
+/** Fast path for the inline Stage / Status / Assigned-to / Market controls in the table. */
 export async function updateListingFields(
   id: string,
   fields: {
@@ -133,6 +140,9 @@ export async function updateListingFields(
     assignedTo?: Assignee | null;
     marketId?: string | null;
     flaggedForReview?: boolean;
+    /** null clears the status (and its reason + date). */
+    reviewStatus?: ReviewStatus | null;
+    reviewReason?: string;
   },
 ): Promise<{ ok: boolean }> {
   await requireAuth();
@@ -143,6 +153,9 @@ export async function updateListingFields(
     marketId?: string | null;
     flaggedForReview?: boolean;
     flagReason?: string;
+    reviewStatus?: ReviewStatus | null;
+    reviewReason?: string;
+    reviewedAt?: Date | null;
   } = {};
 
   if (fields.stage !== undefined && isStage(fields.stage)) {
@@ -151,6 +164,27 @@ export async function updateListingFields(
   if (fields.flaggedForReview !== undefined) {
     data.flaggedForReview = fields.flaggedForReview;
     if (!fields.flaggedForReview) data.flagReason = "";
+  }
+  if (fields.reviewStatus !== undefined) {
+    if (fields.reviewStatus === null) {
+      data.reviewStatus = null;
+      data.reviewReason = "";
+      data.reviewedAt = null;
+    } else if (isReviewStatus(fields.reviewStatus)) {
+      data.reviewStatus = fields.reviewStatus;
+      data.reviewedAt = new Date();
+    } else {
+      return { ok: false };
+    }
+  }
+  // The reason is optional and independent of the status (clearing the status
+  // above already blanks it, so only apply an explicit reason when the status
+  // is not being cleared).
+  if (
+    typeof fields.reviewReason === "string" &&
+    fields.reviewStatus !== null
+  ) {
+    data.reviewReason = fields.reviewReason.trim().slice(0, 500);
   }
   if (fields.assignedTo !== undefined) {
     data.assignedTo =

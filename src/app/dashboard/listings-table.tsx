@@ -22,8 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   ASSIGNEES,
+  REVIEW_BLOCK_TINT,
+  REVIEW_DETAIL_TINT,
+  REVIEW_REASON_SUGGESTIONS,
+  REVIEW_ROW_TINT,
+  REVIEW_STATUSES,
+  REVIEW_STATUS_BADGE,
+  REVIEW_STATUS_DOT,
+  REVIEW_STATUS_LABELS,
   STAGES,
   STAGE_BADGE_CLASS,
   STAGE_LABELS,
@@ -31,7 +40,9 @@ import {
   formatMoney,
   formatNumber,
   formatPercent,
+  isReviewStatus,
   type Assignee,
+  type ReviewStatus,
   type Stage,
 } from "@/lib/listings";
 import { groupByRegion, type MarketLite } from "@/lib/markets";
@@ -58,8 +69,15 @@ type PatchFn = (
     assignedTo?: Assignee | null;
     marketId?: string | null;
     flaggedForReview?: boolean;
+    reviewStatus?: ReviewStatus | null;
+    reviewReason?: string;
   },
 ) => void;
+
+/** The row's review status if it's one of the three, else null. */
+function statusOf(l: { reviewStatus: string | null }): ReviewStatus | null {
+  return isReviewStatus(l.reviewStatus) ? l.reviewStatus : null;
+}
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -84,6 +102,18 @@ function StageBadge({ stage }: { stage: Stage }) {
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_BADGE_CLASS[stage]}`}
     >
       {STAGE_LABELS[stage]}
+    </span>
+  );
+}
+
+function ReviewBadge({ status }: { status: ReviewStatus | null }) {
+  if (!status) return null;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${REVIEW_STATUS_BADGE[status]}`}
+    >
+      <span className={`size-2 rounded-full ${REVIEW_STATUS_DOT[status]}`} />
+      {REVIEW_STATUS_LABELS[status]}
     </span>
   );
 }
@@ -194,6 +224,8 @@ function ListingDetail({
     markets.filter((m) => m.active || m.id === l.marketId),
   );
   const boardNote = l.boardLinks[0]?.addedNote ?? "";
+  const status = statusOf(l);
+  const [reasonOpen, setReasonOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -271,6 +303,100 @@ function ListingDetail({
             </Select>
           </dd>
         </div>
+        <div>
+          <dt className="text-xs font-medium text-slate-500">Status</dt>
+          <dd className="mt-1">
+            <Select
+              value={status ?? "none"}
+              onValueChange={(v) => {
+                if (v === "none") {
+                  setReasonOpen(false);
+                  patch(l.id, { reviewStatus: null });
+                } else if (isReviewStatus(v) && v !== status) {
+                  // A reason belongs to the status it was given for, so a
+                  // change of status starts with a clean slate.
+                  setReasonOpen(false);
+                  patch(l.id, { reviewStatus: v, reviewReason: "" });
+                }
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-slate-300" />
+                    Not reviewed
+                  </span>
+                </SelectItem>
+                {REVIEW_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`size-2 rounded-full ${REVIEW_STATUS_DOT[s]}`}
+                      />
+                      {REVIEW_STATUS_LABELS[s]}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </dd>
+        </div>
+        {status ? (
+          <div className="min-w-[220px] flex-1 sm:max-w-md">
+            <dt className="text-xs font-medium text-slate-500">
+              Reason{" "}
+              <span className="font-normal text-slate-400">(optional)</span>
+            </dt>
+            <dd className="mt-1">
+              {reasonOpen || l.reviewReason ? (
+                <>
+                  <Input
+                    key={l.reviewReason}
+                    defaultValue={l.reviewReason}
+                    autoFocus={reasonOpen && !l.reviewReason}
+                    maxLength={500}
+                    list={`review-reasons-${l.id}`}
+                    placeholder={
+                      status === "Discarded"
+                        ? "Why was it discarded?"
+                        : "Add a note on why…"
+                    }
+                    className="h-8 text-sm"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v !== l.reviewReason) {
+                        patch(l.id, { reviewReason: v });
+                      }
+                      if (!v) setReasonOpen(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.currentTarget.blur();
+                    }}
+                  />
+                  {status === "Discarded" ? (
+                    <datalist id={`review-reasons-${l.id}`}>
+                      {REVIEW_REASON_SUGGESTIONS.map((r) => (
+                        <option key={r} value={r} />
+                      ))}
+                    </datalist>
+                  ) : null}
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-slate-500"
+                  onClick={() => setReasonOpen(true)}
+                >
+                  + Add a reason
+                </Button>
+              )}
+            </dd>
+          </div>
+        ) : null}
       </div>
 
       <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -527,8 +653,12 @@ export function ListingsTable({
       >
         {listings.map((l) => {
           const open = openId === l.id;
+          const status = statusOf(l);
           return (
-            <li key={l.id} className="px-4 py-3.5">
+            <li
+              key={l.id}
+              className={`px-4 py-3.5 ${status ? REVIEW_BLOCK_TINT[status] : ""}`}
+            >
               <div className="flex items-start gap-2">
                 <input
                   type="checkbox"
@@ -552,6 +682,7 @@ export function ListingsTable({
                     <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <MarketBadge market={l.market} />
                       <StageBadge stage={l.stage as Stage} />
+                      <ReviewBadge status={status} />
                       {l.flaggedForReview ? <FlaggedBadge /> : null}
                       <ClientTags matches={l.matches} />
                     </span>
@@ -628,12 +759,17 @@ export function ListingsTable({
           <TableBody>
             {listings.map((l) => {
               const open = openId === l.id;
+              const status = statusOf(l);
               return (
                 <Fragment key={l.id}>
                   <TableRow
                     onClick={() => toggle(l.id)}
                     className={`cursor-pointer border-slate-100 ${
-                      open ? "bg-slate-50" : "hover:bg-slate-50/70"
+                      status
+                        ? REVIEW_ROW_TINT[status]
+                        : open
+                          ? "bg-slate-50"
+                          : "hover:bg-slate-50/70"
                     }`}
                   >
                     <TableCell
@@ -659,6 +795,7 @@ export function ListingsTable({
                     <TableCell className="whitespace-normal">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <MarketBadge market={l.market} />
+                        <ReviewBadge status={status} />
                         {l.flaggedForReview ? <FlaggedBadge /> : null}
                         <ClientTags matches={l.matches} />
                       </span>
@@ -677,7 +814,13 @@ export function ListingsTable({
                     </TableCell>
                   </TableRow>
                   {open ? (
-                    <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
+                    <TableRow
+                      className={`border-slate-100 ${
+                        status
+                          ? REVIEW_DETAIL_TINT[status]
+                          : "bg-slate-50 hover:bg-slate-50"
+                      }`}
+                    >
                       <TableCell colSpan={8} className="px-6 py-5">
                         <ListingDetail
                           listing={l}

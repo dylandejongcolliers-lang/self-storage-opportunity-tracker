@@ -32,6 +32,15 @@ enum WeekStatus {
   Passed
 }
 
+/// The team's own call on a listing while working through opportunities —
+/// separate from Stage (pipeline) and from any client's reaction. Null = not
+/// reviewed yet. Interested = green, Reviewing = yellow, Discarded = red.
+enum ReviewStatus {
+  Interested
+  Reviewing
+  Discarded
+}
+
 /// A client's own read on a listing, left from their share page. Green/
 /// Yellow/Red in the UI.
 enum ClientReaction {
@@ -91,6 +100,12 @@ model Listing {
   flaggedForReview Boolean  @default(false)
   flagReason       String   @default("")
 
+  /// Team review status (null = not reviewed), an optional free-text reason,
+  /// and when the status was last set.
+  reviewStatus     ReviewStatus?
+  reviewReason     String   @default("")
+  reviewedAt       DateTime?
+
   createdAt     DateTime    @default(now())
   lastUpdated   DateTime    @updatedAt
 
@@ -100,6 +115,7 @@ model Listing {
   @@index([marketId])
   @@index([stage])
   @@index([flaggedForReview])
+  @@index([reviewStatus])
 }
 
 /// A buyer we send matched opportunities to.

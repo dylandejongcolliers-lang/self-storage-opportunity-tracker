@@ -1,10 +1,14 @@
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { isSortKey, isStage, type SortKey } from "@/lib/listings";
+import {
+  REVIEW_WHERE,
+  buildListingQuery,
+  orderByFor,
+} from "@/lib/listing-filters";
 import type { BoardLite } from "@/lib/boards";
 import { Filters } from "./filters";
 import { SearchBox } from "./search-box";
+import { ExportButton } from "./export-button";
 import { ReviewTabs } from "./review-tabs";
 import { BoardTabs } from "./board-tabs";
 import { BoardSettings } from "./board-settings";
@@ -14,28 +18,6 @@ import { ListingsTable } from "./listings-table";
 
 export const metadata = { title: "Listings" };
 
-const REVIEW_WHERE: Prisma.ListingWhereInput = {
-  OR: [{ marketId: null }, { flaggedForReview: true }],
-};
-
-function orderByFor(sort: SortKey): Prisma.ListingOrderByWithRelationInput[] {
-  switch (sort) {
-    case "oldest":
-      return [{ dateFirstSeen: "asc" }, { createdAt: "asc" }];
-    case "priceHigh":
-      return [{ askingPrice: { sort: "desc", nulls: "last" } }];
-    case "priceLow":
-      return [{ askingPrice: { sort: "asc", nulls: "last" } }];
-    case "property":
-      return [{ propertyName: "asc" }];
-    case "stage":
-      return [{ stage: "asc" }, { dateFirstSeen: "desc" }];
-    case "newest":
-    default:
-      return [{ dateFirstSeen: "desc" }, { createdAt: "desc" }];
-  }
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -44,11 +26,7 @@ export default async function DashboardPage({
   await requireAuth();
 
   const sp = await searchParams;
-  const marketParam = typeof sp.market === "string" ? sp.market : undefined;
-  const stageParam = typeof sp.stage === "string" ? sp.stage : undefined;
-  const sortParam = typeof sp.sort === "string" ? sp.sort : undefined;
   const boardParam = typeof sp.board === "string" ? sp.board : undefined;
-  const sort: SortKey = isSortKey(sortParam) ? sortParam : "newest";
 
   const [markets, boardRows, clients] = await Promise.all([
     prisma.market.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -76,43 +54,12 @@ export default async function DashboardPage({
   const activeBoard = boardParam
     ? boards.find((b) => b.id === boardParam)
     : undefined;
-  const view: "all" | "review" | "board" = activeBoard
-    ? "board"
-    : sp.view === "review"
-      ? "review"
-      : "all";
-
-  const marketSlugs = new Set(markets.map((m) => m.slug));
-  const where: Prisma.ListingWhereInput = {};
-  const and: Prisma.ListingWhereInput[] = [];
-  if (stageParam && isStage(stageParam)) where.stage = stageParam;
-  let marketFilter: string = "all";
-  if (marketParam === "unassigned") {
-    where.marketId = null;
-    marketFilter = "unassigned";
-  } else if (marketParam && marketSlugs.has(marketParam)) {
-    where.market = { slug: marketParam };
-    marketFilter = marketParam;
-  }
-  if (view === "review") and.push({ OR: REVIEW_WHERE.OR });
-  if (activeBoard) where.boardLinks = { some: { boardId: activeBoard.id } };
-
-  const q = typeof sp.q === "string" ? sp.q.trim() : "";
-  if (q) {
-    and.push({
-      OR: [
-        { propertyName: { contains: q, mode: "insensitive" } },
-        { address: { contains: q, mode: "insensitive" } },
-        { city: { contains: q, mode: "insensitive" } },
-        { state: { contains: q, mode: "insensitive" } },
-        { source: { contains: q, mode: "insensitive" } },
-        { brokerContact: { contains: q, mode: "insensitive" } },
-        { internalNotes: { contains: q, mode: "insensitive" } },
-        { market: { name: { contains: q, mode: "insensitive" } } },
-      ],
+  const { where, sort, view, marketFilter, stageFilter, statusFilter } =
+    buildListingQuery({
+      sp,
+      marketSlugs: new Set(markets.map((m) => m.slug)),
+      activeBoardId: activeBoard?.id,
     });
-  }
-  if (and.length) where.AND = and;
 
   // boardLinks is scoped to the active board (or nothing when not on a board),
   // so every row carries a consistent shape.
@@ -155,6 +102,7 @@ export default async function DashboardPage({
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
+          <ExportButton />
           <BulkAddDialog markets={markets} />
           <AddListingDialog markets={markets} />
         </div>
@@ -175,7 +123,8 @@ export default async function DashboardPage({
         <div className="border-b border-slate-200 bg-slate-50/60 px-4 py-3">
           <Filters
             market={marketFilter}
-            stage={stageParam && isStage(stageParam) ? stageParam : "all"}
+            stage={stageFilter}
+            status={statusFilter}
             sort={sort}
             markets={markets}
           />
