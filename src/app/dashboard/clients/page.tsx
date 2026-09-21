@@ -6,8 +6,13 @@ import { ClientCard } from "./client-card";
 
 export const metadata = { title: "Clients" };
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string }>;
+}) {
   await requireAuth();
+  const { open } = await searchParams;
 
   const [clients, listings, markets] = await Promise.all([
     prisma.client.findMany({
@@ -73,6 +78,7 @@ export default async function ClientsPage() {
                 matches={client.matches}
                 suggestions={suggestions}
                 markets={markets}
+                defaultOpen={client.id === open}
               />
             );
           })}

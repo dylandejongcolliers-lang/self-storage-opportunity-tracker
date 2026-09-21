@@ -74,11 +74,20 @@ function Field({
 
 export default async function ListingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   await requireAuth();
   const { id } = await params;
+  const { from } = await searchParams;
+  const fromClient = from
+    ? await prisma.client.findUnique({
+        where: { id: from },
+        select: { id: true, name: true },
+      })
+    : null;
 
   const [listing, markets] = await Promise.all([
     prisma.listing.findUnique({
@@ -101,10 +110,14 @@ export default async function ListingDetailPage({
   return (
     <div className="space-y-5">
       <Link
-        href="/dashboard"
+        href={
+          fromClient
+            ? `/dashboard/clients?open=${fromClient.id}`
+            : "/dashboard"
+        }
         className="text-muted-foreground hover:text-foreground text-sm"
       >
-        ← Back to listings
+        {fromClient ? `← Back to ${fromClient.name}` : "← Back to listings"}
       </Link>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

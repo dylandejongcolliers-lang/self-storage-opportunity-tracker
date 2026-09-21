@@ -68,17 +68,19 @@ export function ClientCard({
   matches,
   suggestions,
   markets,
+  defaultOpen = false,
 }: {
   client: Client;
   matches: MatchWithListing[];
   suggestions: ListingWithMarket[];
   markets: MarketLite[];
+  defaultOpen?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(!defaultOpen);
 
   const marketName = (slug: string) =>
     markets.find((m) => m.slug === slug)?.name ?? slug;
@@ -231,6 +233,7 @@ export function ClientCard({
               matches.map((m) => (
                 <MatchRow
                   key={m.id}
+                  clientId={client.id}
                   match={m}
                   pending={pending}
                   onStatus={(weekStatus) =>
@@ -291,7 +294,7 @@ export function ClientCard({
                   />
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/dashboard/listings/${l.id}`}
+                      href={`/dashboard/listings/${l.id}?from=${client.id}`}
                       className="block truncate text-sm font-medium hover:underline"
                       title={listingTitle(l)}
                     >
@@ -371,7 +374,9 @@ function MatchRow({
   onStatus,
   onSaveNotes,
   onRemove,
+  clientId,
 }: {
+  clientId: string;
   match: MatchWithListing;
   pending: boolean;
   onStatus: (s: WeekStatus) => void;
@@ -386,7 +391,7 @@ function MatchRow({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <Link
-            href={`/dashboard/listings/${match.listing.id}`}
+            href={`/dashboard/listings/${match.listing.id}?from=${clientId}`}
             className="text-sm font-medium hover:underline"
           >
             {listingTitle(match.listing)}
