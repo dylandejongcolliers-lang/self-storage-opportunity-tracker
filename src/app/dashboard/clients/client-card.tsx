@@ -25,6 +25,7 @@ import { listingTitle } from "@/lib/listing-title";
 import {
   WEEK_STATUSES,
   WEEK_STATUS_BADGE,
+  WEEK_STATUS_CARD_TINT,
   WEEK_STATUS_LABELS,
   CLIENT_REACTION_BADGE,
   CLIENT_REACTION_LABELS,
@@ -82,7 +83,14 @@ export function ClientCard({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState(!defaultOpen);
   const [showPassed, setShowPassed] = useState(false);
-  const activeMatches = matches.filter((m) => m.weekStatus !== "Passed");
+  // Underwrite deals float to the top; the sort is stable so the rest keep order.
+  const activeMatches = matches
+    .filter((m) => m.weekStatus !== "Passed")
+    .sort(
+      (a, b) =>
+        Number(b.weekStatus === "CarriedOver") -
+        Number(a.weekStatus === "CarriedOver"),
+    );
   const passedMatches = matches.filter((m) => m.weekStatus === "Passed");
 
   const marketName = (slug: string) =>
@@ -440,7 +448,9 @@ function MatchRow({
   const dirty = notes !== match.clientFacingNotes;
 
   return (
-    <div className="rounded-lg border p-3">
+    <div
+      className={`rounded-lg border p-3 ${WEEK_STATUS_CARD_TINT[match.weekStatus as WeekStatus] ?? ""}`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <Link

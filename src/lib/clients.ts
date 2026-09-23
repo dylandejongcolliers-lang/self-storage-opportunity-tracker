@@ -12,16 +12,23 @@ export type WeekStatus = (typeof WEEK_STATUSES)[number];
 
 export const WEEK_STATUS_LABELS: Record<WeekStatus, string> = {
   New: "New",
-  CarriedOver: "Carried over",
-  Updated: "Updated",
+  // Internal labels: CarriedOver = Underwrite, Updated = Add Detail (DB values unchanged).
+  CarriedOver: "Underwrite",
+  Updated: "Add Detail",
   Passed: "Passed",
 };
 
 export const WEEK_STATUS_BADGE: Record<WeekStatus, string> = {
   New: "bg-[#edf1f7] text-[#264a72] ring-1 ring-inset ring-[#264a72]/20",
-  CarriedOver: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/15",
-  Updated: "bg-[#f4eede] text-[#7a5a2c] ring-1 ring-inset ring-[#7a5a2c]/20",
+  CarriedOver: "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-600/25",
+  Updated: "bg-yellow-100 text-yellow-800 ring-1 ring-inset ring-yellow-600/25",
   Passed: "bg-[#f3e7e3] text-[#834a39] ring-1 ring-inset ring-[#834a39]/20",
+};
+
+/** Whole-card highlight for a client match (literal classes for Tailwind). */
+export const WEEK_STATUS_CARD_TINT: Partial<Record<WeekStatus, string>> = {
+  CarriedOver: "bg-emerald-50 border-emerald-300",
+  Updated: "bg-yellow-50 border-yellow-300",
 };
 
 export function isWeekStatus(v: unknown): v is WeekStatus {

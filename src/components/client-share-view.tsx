@@ -16,7 +16,6 @@ import {
   WEEK_STATUS_BADGE,
   WEEK_STATUS_LABELS,
   isClientReaction,
-  type WeekStatus,
 } from "@/lib/clients";
 
 type MatchWithListing = ListingClientMatch & {
@@ -106,11 +105,13 @@ export function ClientShareView({
                         >
                           {STAGE_LABELS[l.stage as Stage]}
                         </span>
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${WEEK_STATUS_BADGE[m.weekStatus as WeekStatus]}`}
-                        >
-                          {WEEK_STATUS_LABELS[m.weekStatus as WeekStatus]}
-                        </span>
+                        {m.weekStatus === "New" ? (
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${WEEK_STATUS_BADGE.New}`}
+                          >
+                            {WEEK_STATUS_LABELS.New}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </div>

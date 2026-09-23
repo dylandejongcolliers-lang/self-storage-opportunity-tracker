@@ -31,7 +31,6 @@ export default async function PublishPage({
 
   const counts = { New: 0, Updated: 0, CarriedOver: 0 } as Record<string, number>;
   for (const m of client.matches) counts[m.weekStatus] += 1;
-  const pendingCount = counts.New + counts.Updated;
 
   return (
     <div className="space-y-5">
@@ -55,7 +54,7 @@ export default async function PublishPage({
               : "Never published"}
           </p>
         </div>
-        <PublishButton clientId={client.id} pendingCount={pendingCount} />
+        <PublishButton clientId={client.id} />
       </div>
 
       <div className="flex flex-wrap gap-2 text-sm">
@@ -64,12 +63,6 @@ export default async function PublishPage({
         </span>
         <span className="rounded-md border px-2.5 py-1">
           {counts.New} {WEEK_STATUS_LABELS.New}
-        </span>
-        <span className="rounded-md border px-2.5 py-1">
-          {counts.Updated} {WEEK_STATUS_LABELS.Updated}
-        </span>
-        <span className="rounded-md border px-2.5 py-1">
-          {counts.CarriedOver} {WEEK_STATUS_LABELS.CarriedOver}
         </span>
       </div>
 

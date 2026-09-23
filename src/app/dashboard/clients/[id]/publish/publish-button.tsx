@@ -18,11 +18,8 @@ import { publishSnapshot } from "@/app/dashboard/clients/actions";
 
 export function PublishButton({
   clientId,
-  pendingCount,
 }: {
   clientId: string;
-  /** How many matches will flip from New/Updated to Carried over. */
-  pendingCount: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -35,11 +32,7 @@ export function PublishButton({
         toast.error("Could not publish the snapshot.");
         return;
       }
-      toast.success(
-        res.carriedOver
-          ? `Published. ${res.carriedOver} moved to "Carried over".`
-          : "Published.",
-      );
+      toast.success("Published.");
       setOpen(false);
       router.refresh();
     });
@@ -58,20 +51,6 @@ export function PublishButton({
               <p>
                 This stamps today as the published date on the client&rsquo;s
                 share page.
-              </p>
-              <p>
-                {pendingCount > 0 ? (
-                  <>
-                    <strong>
-                      {pendingCount}{" "}
-                      {pendingCount === 1 ? "listing" : "listings"}
-                    </strong>{" "}
-                    currently marked <em>New</em> or <em>Updated</em> will move to{" "}
-                    <em>Carried over</em>.
-                  </>
-                ) : (
-                  <>Nothing is marked New or Updated, so no badges will change.</>
-                )}
               </p>
             </div>
           </DialogDescription>

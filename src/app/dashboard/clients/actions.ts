@@ -187,30 +187,23 @@ export async function removeMatch(id: string): Promise<{ ok: boolean }> {
 }
 
 /**
- * Lock in this week's snapshot for a client: stamp `lastPublishedAt` and flip
- * every match that is currently New or Updated to CarriedOver, so next week's
- * New/Updated badges only reflect genuine changes.
+ * Stamp lastPublishedAt for a client. Match statuses are left alone; they are
+ * the team's own Underwrite / Add Detail flags now.
  */
 export async function publishSnapshot(
   clientId: string,
-): Promise<{ ok: boolean; carriedOver?: number }> {
+): Promise<{ ok: boolean }> {
   await requireAuth();
 
   try {
-    const [flipped] = await prisma.$transaction([
-      prisma.listingClientMatch.updateMany({
-        where: { clientId, weekStatus: { in: ["New", "Updated"] } },
-        data: { weekStatus: "CarriedOver" },
-      }),
-      prisma.client.update({
-        where: { id: clientId },
-        data: { lastPublishedAt: new Date() },
-      }),
-    ]);
+    await prisma.client.update({
+      where: { id: clientId },
+      data: { lastPublishedAt: new Date() },
+    });
 
     revalidatePath("/dashboard/clients");
     revalidatePath(`/dashboard/clients/${clientId}/publish`);
-    return { ok: true, carriedOver: flipped.count };
+    return { ok: true };
   } catch {
     return { ok: false };
   }
