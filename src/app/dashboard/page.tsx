@@ -74,7 +74,10 @@ export default async function DashboardPage({
           select: { addedNote: true },
         },
         matches: {
-          select: { client: { select: { id: true, name: true } } },
+          select: {
+            weekStatus: true,
+            client: { select: { id: true, name: true } },
+          },
         },
       },
     }),

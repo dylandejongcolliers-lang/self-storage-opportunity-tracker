@@ -59,7 +59,10 @@ import { FlagForReviewDialog } from "./flag-for-review-dialog";
 export type ListingRow = Listing & {
   market: MarketLite | null;
   boardLinks: { addedNote: string }[];
-  matches: { client: { id: string; name: string } }[];
+  matches: {
+    weekStatus: string;
+    client: { id: string; name: string };
+  }[];
 };
 
 type PatchFn = (
@@ -129,16 +132,26 @@ function FlaggedBadge() {
 function ClientTags({
   matches,
 }: {
-  matches: { client: { id: string; name: string } }[];
+  matches: {
+    weekStatus: string;
+    client: { id: string; name: string };
+  }[];
 }) {
-  return matches.map((m) => (
-    <span
-      key={m.client.id}
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${clientTagClass(m.client.id)}`}
-    >
-      {m.client.name}
-    </span>
-  ));
+  return matches.map((m) => {
+    const passed = m.weekStatus === "Passed";
+    return (
+      <span
+        key={m.client.id}
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+          passed
+            ? "bg-slate-100 text-slate-500 ring-slate-300 line-through decoration-slate-400"
+            : clientTagClass(m.client.id)
+        }`}
+      >
+        {passed ? `${m.client.name}-Passed` : m.client.name}
+      </span>
+    );
+  });
 }
 
 function MarketBadge({ market }: { market: MarketLite | null }) {

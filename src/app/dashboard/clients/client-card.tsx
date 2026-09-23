@@ -81,6 +81,9 @@ export function ClientCard({
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState(!defaultOpen);
+  const [showPassed, setShowPassed] = useState(false);
+  const activeMatches = matches.filter((m) => m.weekStatus !== "Passed");
+  const passedMatches = matches.filter((m) => m.weekStatus === "Passed");
 
   const marketName = (slug: string) =>
     markets.find((m) => m.slug === slug)?.name ?? slug;
@@ -222,15 +225,15 @@ export function ClientCard({
         {/* Confirmed matches */}
         <div>
           <h3 className="text-sm font-semibold">
-            Confirmed matches ({matches.length})
+            Confirmed matches ({activeMatches.length})
           </h3>
           <div className="mt-2 space-y-3">
-            {matches.length === 0 ? (
+            {activeMatches.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 None yet. Confirm one from the suggestions.
               </p>
             ) : (
-              matches.map((m) => (
+              activeMatches.map((m) => (
                 <MatchRow
                   key={m.id}
                   clientId={client.id}
@@ -248,6 +251,12 @@ export function ClientCard({
                       "Could not save notes.",
                     )
                   }
+                  onPass={() =>
+                    run(
+                      () => updateMatch(m.id, { weekStatus: "Passed" }),
+                      "Could not mark as passed.",
+                    )
+                  }
                   onRemove={() =>
                     run(() => removeMatch(m.id), "Could not remove the match.")
                   }
@@ -255,6 +264,48 @@ export function ClientCard({
               ))
             )}
           </div>
+
+          {passedMatches.length > 0 ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowPassed((v) => !v)}
+                className="text-muted-foreground hover:text-foreground text-xs underline"
+              >
+                {showPassed ? "Hide" : "Show"} passed ({passedMatches.length})
+              </button>
+              {showPassed ? (
+                <div className="mt-2 space-y-2">
+                  {passedMatches.map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-2 rounded-lg border border-dashed p-2.5"
+                    >
+                      <Link
+                        href={`/dashboard/listings/${m.listing.id}?from=${client.id}`}
+                        className="min-w-0 flex-1 truncate text-sm text-slate-500 hover:underline"
+                      >
+                        {listingTitle(m.listing)}
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() =>
+                          run(
+                            () => updateMatch(m.id, { weekStatus: "New" }),
+                            "Could not restore the match.",
+                          )
+                        }
+                      >
+                        Restore
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Suggestions from the buy box */}
@@ -373,6 +424,7 @@ function MatchRow({
   pending,
   onStatus,
   onSaveNotes,
+  onPass,
   onRemove,
   clientId,
 }: {
@@ -381,6 +433,7 @@ function MatchRow({
   pending: boolean;
   onStatus: (s: WeekStatus) => void;
   onSaveNotes: (notes: string) => void;
+  onPass: () => void;
   onRemove: () => void;
 }) {
   const [notes, setNotes] = useState(match.clientFacingNotes);
@@ -452,8 +505,17 @@ function MatchRow({
 
         <Button
           size="sm"
+          variant="outline"
+          className="ml-auto"
+          disabled={pending}
+          onClick={onPass}
+        >
+          Passed
+        </Button>
+        <Button
+          size="sm"
           variant="ghost"
-          className="text-destructive hover:text-destructive ml-auto"
+          className="text-destructive hover:text-destructive"
           disabled={pending}
           onClick={onRemove}
         >
